@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "node scripts/generate-icon.js && electron-builder",
+    "build:noicon": "electron-builder"
   },
   "devDependencies": {
     "electron": "^34.0.0",
@@ -14,17 +15,24 @@
   "build": {
     "appId": "se.simpel.app",
     "productName": "Simpel",
+    "copyright": "Copyright © 2024 Simpel",
+    "icon": "build/icon.png",
     "files": [
       "main.js",
       "preload.js",
       "Simpel.html"
     ],
+    "artifactName": "Simpel-Setup-${version}.exe",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "publisherName": "Simpel"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Simpel"
     }
   }
 }
