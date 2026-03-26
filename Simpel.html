@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simpel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* =========================================================
+   CSS VARIABLES & RESET
+   ========================================================= */
+:root {
+  --sb-bg: #3B4F7C;
+  --sb-text: #B8C8E8;
+  --sb-active-bg: rgba(255,255,255,.14);
+  --accent: #2563EB;
+  --accent-lt: #EEF3FD;
+  --accent-hover: #1D4ED8;
+  --high: #DC2626;
+  --med: #D97706;
+  --low: #16A34A;
+  --note-bg: #FEFCE8;
+  --border: #E0E2EB;
+  --bg: #F2F3F7;
+  --surface: #FFFFFF;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --radius: 10px;
+  --shadow: 0 1px 4px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'Outfit', system-ui, sans-serif; font-size: 14px; color: var(--text); background: var(--bg); overflow: hidden; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; font-size: 14px; }
+a { color: inherit; text-decoration: none; }
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+#app { display: grid; grid-template-columns: 240px 1fr; height: 100vh; }
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+#sidebar {
+  background: var(--sb-bg);
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  padding-bottom: 16px;
+}
+.sb-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.sb-logo-icon {
+  width: 32px; height: 32px; background: var(--accent);
+  border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sb-logo-icon svg { width: 18px; height: 18px; }
+.sb-logo-text { font-size: 18px; font-weight: 700; color: #fff; }
+.sb-section { padding: 12px 8px 4px; }
+.sb-section-label { font-size: 11px; font-weight: 600; color: var(--sb-text); text-transform: uppercase; letter-spacing: .06em; padding: 0 8px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 7px; cursor: pointer;
+  color: var(--sb-text); font-size: 13.5px; font-weight: 500;
+  transition: background .15s; margin: 1px 0;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); }
+.nav-item.active { background: var(--sb-active-bg); color: #fff; border-left: 3px solid #fff; padding-left: 9px; }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .8; }
+.nav-item.active svg { opacity: 1; }
+.nav-badge { margin-left: auto; background: rgba(255,255,255,.18); color: #fff; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; }
+
+.sb-projects { padding: 0 8px; }
+.sb-project-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-radius: 7px; cursor: pointer;
+  color: var(--sb-text); font-size: 13px;
+  transition: background .15s; margin: 1px 0;
+}
+.sb-project-item:hover { background: rgba(255,255,255,.08); }
+.sb-project-item.active { background: var(--sb-active-bg); color: #fff; }
+.sb-project-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sb-project-count { margin-left: auto; font-size: 11px; opacity: .6; }
+
+.sb-divider { height: 1px; background: rgba(255,255,255,.08); margin: 8px 16px; }
+.sb-bottom { margin-top: auto; padding: 0 8px; }
+.sb-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 12px; border-radius: 7px;
+  color: var(--sb-text); font-size: 13px; font-weight: 500;
+  transition: background .15s; margin: 2px 0;
+}
+.sb-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.sb-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* AI Status */
+.ai-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #6B7280; display: inline-block; margin-right: 6px;
+  transition: background .3s;
+}
+.ai-status-dot.active { background: var(--low); box-shadow: 0 0 6px var(--low); }
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+#main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+#topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 10px 24px; display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+#topbar h1 { font-size: 16px; font-weight: 600; color: var(--text); margin-right: 4px; white-space: nowrap; }
+#search-input {
+  flex: 1; max-width: 320px;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px 7px 34px; font-size: 13px; outline: none;
+  background: var(--bg); transition: border .15s;
+}
+#search-input:focus { border-color: var(--accent); background: #fff; }
+.search-wrap { position: relative; flex: 1; max-width: 320px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 15px; height: 15px; pointer-events: none; }
+#quick-input-wrap { display: flex; align-items: center; gap: 6px; flex: 1; max-width: 400px; }
+#quick-title {
+  flex: 1; border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px; outline: none; background: var(--bg);
+  transition: border .15s; font-size: 13px;
+}
+#quick-title:focus { border-color: var(--accent); background: #fff; }
+#quick-priority {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 8px; background: var(--bg); outline: none; font-size: 13px; cursor: pointer;
+}
+#quick-add-btn {
+  background: var(--accent); color: #fff; border-radius: 8px;
+  padding: 7px 14px; font-size: 13px; font-weight: 600;
+  transition: background .15s; white-space: nowrap;
+}
+#quick-add-btn:hover { background: var(--accent-hover); }
+#ai-quick-btn {
+  background: #7C3AED; color: #fff; border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; font-weight: 600;
+  transition: background .15s; white-space: nowrap;
+}
+#ai-quick-btn:hover { background: #6D28D9; }
+#ai-quick-btn.ai-disabled { background: #9CA3AF; cursor: not-allowed; }
+
+/* VIEW CONTAINER */
+#view-container { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+/* =========================================================
+   STATS BAR
+   ========================================================= */
+.stats-bar {
+  display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.stat-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 16px; font-size: 13px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.stat-chip .stat-num { font-size: 20px; font-weight: 700; }
+.stat-chip .stat-label { color: var(--text-muted); font-size: 11px; }
+.stat-chip.high .stat-num { color: var(--high); }
+.stat-chip.med .stat-num { color: var(--med); }
+.stat-chip.low-c .stat-num { color: var(--low); }
+
+/* =========================================================
+   FILTER BAR
+   ========================================================= */
+.filter-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 5px 14px; border-radius: 99px; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-muted); transition: all .15s; cursor: pointer;
+}
+.filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sort-btn {
+  margin-left: auto; padding: 5px 14px; border-radius: 99px; font-size: 13px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-muted); cursor: pointer; transition: all .15s;
+}
+.sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* =========================================================
+   TASK LIST
+   ========================================================= */
+#new-task-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff; border-radius: 8px;
+  padding: 8px 16px; font-size: 14px; font-weight: 600;
+  margin-bottom: 16px; transition: background .15s;
+}
+#new-task-btn:hover { background: var(--accent-hover); }
+.task-list { display: flex; flex-direction: column; gap: 10px; }
+.task-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  border-left: 4px solid var(--border);
+  padding: 14px 16px; transition: box-shadow .15s;
+}
+.task-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.task-card.priority-high { border-left-color: var(--high); }
+.task-card.priority-medium { border-left-color: var(--med); }
+.task-card.priority-low { border-left-color: var(--low); }
+.task-header { display: flex; align-items: flex-start; gap: 10px; }
+.task-checkbox { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; flex-shrink: 0; accent-color: var(--accent); }
+.task-title { font-size: 14px; font-weight: 600; flex: 1; line-height: 1.4; word-break: break-word; }
+.task-title.done { text-decoration: line-through; opacity: .5; }
+.task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; margin-left: 28px; align-items: center; }
+.task-tag {
+  background: var(--accent-lt); color: var(--accent);
+  border-radius: 99px; padding: 2px 10px; font-size: 11px; font-weight: 600;
+}
+.task-deadline { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.task-deadline.overdue { color: var(--high); font-weight: 600; }
+.task-deadline.soon { color: var(--med); font-weight: 600; }
+.task-project { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.task-notes-preview { font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-left: 28px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 60px; overflow: hidden; }
+.task-actions { display: flex; gap: 6px; margin-top: 10px; margin-left: 28px; }
+.task-actions button {
+  padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  border: 1px solid transparent; transition: all .15s;
+}
+.btn-edit { color: var(--accent); border-color: var(--accent); }
+.btn-edit:hover { background: var(--accent); color: #fff; }
+.btn-share { color: var(--low); border-color: var(--low); }
+.btn-share:hover { background: var(--low); color: #fff; }
+.btn-delete { color: var(--high); border-color: var(--high); }
+.btn-delete:hover { background: var(--high); color: #fff; }
+.btn-split { color: #7C3AED; border-color: #7C3AED; }
+.btn-split:hover { background: #7C3AED; color: #fff; }
+.btn-split.ai-disabled { color: #9CA3AF; border-color: #9CA3AF; cursor: not-allowed; }
+
+.priority-badge {
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase;
+}
+.priority-badge.high { background: #FEE2E2; color: var(--high); }
+.priority-badge.medium { background: #FEF3C7; color: var(--med); }
+.priority-badge.low { background: #DCFCE7; color: var(--low); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state svg { width: 48px; height: 48px; opacity: .3; margin-bottom: 12px; }
+.empty-state p { font-size: 15px; font-weight: 500; }
+.empty-state span { font-size: 13px; }
+
+/* =========================================================
+   CALENDAR VIEW
+   ========================================================= */
+#calendar-view { max-width: 900px; }
+.cal-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.cal-header h2 { font-size: 18px; font-weight: 700; flex: 1; text-align: center; }
+.cal-nav-btn {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all .15s;
+}
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-day-header { background: var(--surface); text-align: center; padding: 10px 4px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.cal-day {
+  background: var(--surface); min-height: 90px; padding: 8px;
+  cursor: pointer; transition: background .15s; vertical-align: top;
+}
+.cal-day:hover { background: var(--accent-lt); }
+.cal-day.other-month { background: #FAFAFA; }
+.cal-day.today { background: #EFF6FF; }
+.cal-day-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.cal-day.today .cal-day-num { color: var(--accent); }
+.cal-task-chip {
+  background: var(--accent); color: #fff; border-radius: 4px;
+  padding: 2px 6px; font-size: 11px; margin-bottom: 2px;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity .15s;
+}
+.cal-task-chip:hover { opacity: .8; }
+.cal-task-chip.priority-high { background: var(--high); }
+.cal-task-chip.priority-medium { background: var(--med); }
+.cal-task-chip.priority-low { background: var(--low); }
+
+/* =========================================================
+   NOTES VIEW
+   ========================================================= */
+#notes-view { max-width: 900px; }
+.notes-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.notes-toolbar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+#add-note-btn {
+  background: var(--accent); color: #fff; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600; transition: background .15s;
+}
+#add-note-btn:hover { background: var(--accent-hover); }
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.note-card {
+  background: var(--note-bg); border: 1px solid #FDE68A;
+  border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.note-textarea {
+  border: none; background: transparent; resize: none;
+  font-size: 13px; line-height: 1.6; color: var(--text);
+  min-height: 100px; outline: none; width: 100%;
+}
+.note-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.note-date { font-size: 11px; color: #92400E; }
+.note-actions { display: flex; gap: 6px; }
+.btn-to-task {
+  font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
+  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
+}
+.btn-to-task:hover { background: var(--accent); color: #fff; }
+.btn-del-note {
+  font-size: 11px; font-weight: 600; color: var(--high); border: 1px solid var(--high);
+  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
+}
+.btn-del-note:hover { background: var(--high); color: #fff; }
+
+/* AI writing toolbar */
+.ai-float-toolbar {
+  display: none; position: fixed; background: #1F2937; border-radius: 8px;
+  padding: 6px; gap: 4px; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+.ai-float-toolbar.visible { display: flex; }
+.ai-float-btn {
+  color: #fff; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 5px;
+  cursor: pointer; transition: background .15s; background: #374151;
+}
+.ai-float-btn:hover { background: #7C3AED; }
+
+/* =========================================================
+   KANBAN VIEW
+   ========================================================= */
+#kanban-view { max-width: 1100px; }
+#kanban-view h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+.kanban-col {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.kanban-col-header {
+  padding: 12px 16px; font-size: 13px; font-weight: 700;
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
+}
+.kanban-col-header .col-badge {
+  background: var(--accent-lt); color: var(--accent);
+  border-radius: 99px; font-size: 11px; padding: 2px 8px; margin-left: auto;
+}
+.kanban-col[data-col="todo"] .kanban-col-header { border-top: 3px solid var(--med); }
+.kanban-col[data-col="doing"] .kanban-col-header { border-top: 3px solid var(--accent); }
+.kanban-col[data-col="done"] .kanban-col-header { border-top: 3px solid var(--low); }
+.kanban-cards { min-height: 200px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.kanban-cards.drag-over { background: var(--accent-lt); }
+.kanban-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  cursor: grab; border-left: 3px solid var(--border);
+  transition: box-shadow .15s, opacity .15s;
+}
+.kanban-card:active { cursor: grabbing; opacity: .7; }
+.kanban-card:hover { box-shadow: var(--shadow); }
+.kanban-card.priority-high { border-left-color: var(--high); }
+.kanban-card.priority-medium { border-left-color: var(--med); }
+.kanban-card.priority-low { border-left-color: var(--low); }
+.kanban-card-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.kanban-card-meta { font-size: 11px; color: var(--text-muted); }
+
+/* =========================================================
+   COMPLETED VIEW
+   ========================================================= */
+#completed-view h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.completed-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  opacity: .55; margin-bottom: 8px;
+}
+.completed-title { font-size: 14px; font-weight: 600; text-decoration: line-through; }
+.completed-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.completed-actions { margin-top: 8px; display: flex; gap: 6px; }
+.btn-restore {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 5px; padding: 3px 10px;
+  cursor: pointer; transition: all .15s; background: none;
+}
+.btn-restore:hover { background: var(--accent); color: #fff; }
+#ai-summary-btn {
+  background: #7C3AED; color: #fff; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s;
+}
+#ai-summary-btn:hover { background: #6D28D9; }
+#ai-summary-btn.ai-disabled { background: #9CA3AF; cursor: not-allowed; }
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 14px;
+  width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: fadeUp .2s ease;
+}
+.modal-sm { max-width: 440px; }
+.modal-md { max-width: 580px; }
+.modal-lg { max-width: 720px; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 17px; font-weight: 700; }
+.modal-close { width: 30px; height: 30px; border-radius: 6px; background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: background .15s; }
+.modal-close:hover { background: var(--border); }
+.modal-body { padding: 20px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; outline: none; background: var(--bg); transition: border .15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); background: #fff; }
+.form-group textarea { min-height: 80px; resize: vertical; }
+.priority-radios { display: flex; gap: 8px; }
+.priority-radio { display: none; }
+.priority-label {
+  padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 2px solid transparent; transition: all .15s;
+}
+.priority-label.high { color: var(--high); border-color: #FCA5A5; background: #FEE2E2; }
+.priority-label.medium { color: var(--med); border-color: #FCD34D; background: #FEF3C7; }
+.priority-label.low { color: var(--low); border-color: #86EFAC; background: #DCFCE7; }
+.priority-radio:checked + .priority-label.high { background: var(--high); color: #fff; border-color: var(--high); }
+.priority-radio:checked + .priority-label.medium { background: var(--med); color: #fff; border-color: var(--med); }
+.priority-radio:checked + .priority-label.low { background: var(--low); color: #fff; border-color: var(--low); }
+
+.btn-primary { background: var(--accent); color: #fff; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 600; transition: background .15s; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 500; transition: all .15s; }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: var(--high); color: #fff; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 600; transition: opacity .15s; }
+.btn-danger:hover { opacity: .85; }
+.btn-ai { background: #7C3AED; color: #fff; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 600; transition: background .15s; }
+.btn-ai:hover { background: #6D28D9; }
+
+/* AI Subtask preview */
+.subtask-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.subtask-item { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+.subtask-item input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
+.subtask-item label { font-size: 13px; flex: 1; cursor: pointer; }
+
+/* AI Summary */
+.ai-summary-text { background: var(--bg); border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.8; min-height: 80px; white-space: pre-wrap; }
+
+/* Project color picker */
+.color-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform .15s; }
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+
+/* Notification bar */
+#notif-bar {
+  position: fixed; bottom: 20px; right: 20px; z-index: 9998;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.notif-toast {
+  background: #1F2937; color: #fff; border-radius: 10px;
+  padding: 12px 18px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3); max-width: 320px;
+  animation: slideIn .2s ease;
+}
+.notif-toast.error { background: var(--high); }
+.notif-toast.success { background: var(--low); }
+@keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9.5L7 13.5L15 5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="sb-logo-text">Simpel</span>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Vyer</div>
+      <div class="nav-item active" data-view="tasks" onclick="switchView('tasks')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 5a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V8zm0 5a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1z"/></svg>
+        Uppgifter
+        <span class="nav-badge" id="badge-tasks">0</span>
+      </div>
+      <div class="nav-item" data-view="calendar" onclick="switchView('calendar')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 0a.5.5 0 01.5.5V1h5V.5a.5.5 0 011 0V1h1a2 2 0 012 2v11a2 2 0 01-2 2H2a2 2 0 01-2-2V3a2 2 0 012-2h1V.5A.5.5 0 015 0zM1 4v10a1 1 0 001 1h12a1 1 0 001-1V4H1z"/></svg>
+        Kalender
+      </div>
+      <div class="nav-item" data-view="notes" onclick="switchView('notes')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 1A1.5 1.5 0 001 2.5v11A1.5 1.5 0 002.5 15h11a1.5 1.5 0 001.5-1.5V5.5L10.5 1H2.5zM10 2v3.5H13L10 2zM4 7h8v1H4V7zm0 3h8v1H4v-1zm0 3h5v1H4v-1z"/></svg>
+        Anteckningar
+        <span class="nav-badge" id="badge-notes">0</span>
+      </div>
+      <div class="nav-item" data-view="kanban" onclick="switchView('kanban')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h3v12H2V2zm4.5 0h3v7h-3V2zm4.5 0h3v5h-3V2z"/></svg>
+        Kanban
+      </div>
+      <div class="nav-item" data-view="completed" onclick="switchView('completed')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.354 4.354a.5.5 0 00-.708-.708L5 10.293 2.354 7.646a.5.5 0 00-.708.708l3 3a.5.5 0 00.708 0l7-7z"/></svg>
+        Avklarade
+        <span class="nav-badge" id="badge-done">0</span>
+      </div>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:8px;">
+        Projekt
+        <button onclick="openProjectModal()" style="color:var(--sb-text);font-size:18px;line-height:1;background:none;cursor:pointer;" title="Nytt projekt">+</button>
+      </div>
+      <div class="sb-project-item" id="proj-all" onclick="filterByProject(null)">
+        <span class="sb-project-dot" style="background:#9CA3AF"></span>
+        Alla uppgifter
+      </div>
+      <div id="sidebar-projects"></div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-divider" style="margin:0 0 8px;"></div>
+      <div class="sb-section-label" style="padding:0 12px 6px;">Export</div>
+      <button class="sb-btn" onclick="exportJSON()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg>
+        Exportera JSON
+      </button>
+      <button class="sb-btn" onclick="importJSON()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z"/></svg>
+        Importera JSON
+      </button>
+      <button class="sb-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 01-2 2H4a2 2 0 01-2-2V2a2 2 0 012-2h5.5L14 4.5zm-3 0A1.5 1.5 0 019.5 3V1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V4.5h-2z"/></svg>
+        Exportera Excel
+      </button>
+      <div class="sb-divider" style="margin:8px 0;"></div>
+      <div style="padding:0 12px 6px;display:flex;align-items:center;gap:4px;">
+        <span class="ai-status-dot" id="ai-dot"></span>
+        <span style="font-size:12px;color:var(--sb-text)" id="ai-status-text">Ollama ej aktiv</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <h1 id="view-title">Uppgifter</h1>
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
+        <input type="text" id="search-input" placeholder="Sök uppgifter..." oninput="onSearch(this.value)">
+      </div>
+      <div id="quick-input-wrap">
+        <input type="text" id="quick-title" placeholder="Snabbt: skriv en uppgift och tryck Enter..." onkeydown="onQuickEnter(event)">
+        <select id="quick-priority">
+          <option value="medium">Medel</option>
+          <option value="high">Hög</option>
+          <option value="low">Låg</option>
+        </select>
+        <button id="quick-add-btn" onclick="quickAddTask()">Lägg till</button>
+        <button id="ai-quick-btn" onclick="aiCreateFromInput()" title="Skapa uppgift med AI (Ctrl+Space)">AI</button>
+      </div>
+    </div>
+
+    <!-- VIEW CONTAINER -->
+    <div id="view-container">
+      <!-- TASKS VIEW -->
+      <div id="tasks-view">
+        <div class="stats-bar" id="stats-bar"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <button id="new-task-btn" onclick="openTaskModal()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Ny uppgift
+          </button>
+        </div>
+        <div class="filter-bar" id="filter-bar">
+          <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">Alla</button>
+          <button class="filter-btn" data-f="high" onclick="setFilter('high',this)">Hög prioritet</button>
+          <button class="filter-btn" data-f="medium" onclick="setFilter('medium',this)">Medel</button>
+          <button class="filter-btn" data-f="low" onclick="setFilter('low',this)">Låg</button>
+          <button class="sort-btn" id="sort-btn" onclick="toggleSort()">Sortera datum</button>
+        </div>
+        <div class="task-list" id="task-list"></div>
+      </div>
+
+      <!-- CALENDAR VIEW -->
+      <div id="calendar-view" style="display:none">
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="calNav(-1)">Forra</button>
+          <h2 id="cal-title"></h2>
+          <button class="cal-nav-btn" onclick="calNav(1)">Nasta</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <!-- NOTES VIEW -->
+      <div id="notes-view" style="display:none">
+        <div class="notes-toolbar">
+          <h2>Anteckningar</h2>
+          <button id="add-note-btn" onclick="addNote()">+ Ny anteckning</button>
+        </div>
+        <div class="notes-grid" id="notes-grid"></div>
+      </div>
+
+      <!-- KANBAN VIEW -->
+      <div id="kanban-view" style="display:none">
+        <h2>Kanban</h2>
+        <div class="kanban-board">
+          <div class="kanban-col" data-col="todo">
+            <div class="kanban-col-header">Att gora <span class="col-badge" id="kb-badge-todo">0</span></div>
+            <div class="kanban-cards" id="kb-todo" ondragover="kbDragOver(event,this)" ondrop="kbDrop(event,'todo')"></div>
+          </div>
+          <div class="kanban-col" data-col="doing">
+            <div class="kanban-col-header">Pagar <span class="col-badge" id="kb-badge-doing">0</span></div>
+            <div class="kanban-cards" id="kb-doing" ondragover="kbDragOver(event,this)" ondrop="kbDrop(event,'doing')"></div>
+          </div>
+          <div class="kanban-col" data-col="done">
+            <div class="kanban-col-header">Klart <span class="col-badge" id="kb-badge-done">0</span></div>
+            <div class="kanban-cards" id="kb-done" ondragover="kbDragOver(event,this)" ondrop="kbDrop(event,'done')"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLETED VIEW -->
+      <div id="completed-view" style="display:none">
+        <h2>Avklarade uppgifter</h2>
+        <button id="ai-summary-btn" onclick="aiWeeklySummary()">Veckosammanfattning med AI</button>
+        <div id="completed-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- TASK MODAL -->
+<div class="modal-backdrop" id="task-modal-backdrop" onclick="closeModalOnBackdrop(event,'task-modal-backdrop')">
+  <div class="modal modal-md" id="task-modal">
+    <div class="modal-header">
+      <h2 id="task-modal-title">Ny uppgift</h2>
+      <button class="modal-close" onclick="closeTaskModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-task-id">
+      <div class="form-group">
+        <label>Titel</label>
+        <input type="text" id="f-title" placeholder="Uppgiftstitel (valfri)">
+      </div>
+      <div class="form-group">
+        <label>Prioritet</label>
+        <div class="priority-radios">
+          <input type="radio" name="priority" id="p-high" value="high" class="priority-radio">
+          <label for="p-high" class="priority-label high">Hog</label>
+          <input type="radio" name="priority" id="p-medium" value="medium" class="priority-radio" checked>
+          <label for="p-medium" class="priority-label medium">Medel</label>
+          <input type="radio" name="priority" id="p-low" value="low" class="priority-radio">
+          <label for="p-low" class="priority-label low">Lag</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Deadline</label>
+          <input type="date" id="f-deadline">
+        </div>
+        <div class="form-group">
+          <label>Projekt</label>
+          <select id="f-project">
+            <option value="">Inget projekt</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Aterkommer</label>
+          <select id="f-recurring">
+            <option value="none">Ingen</option>
+            <option value="daily">Dagligen</option>
+            <option value="weekly">Veckovis</option>
+            <option value="monthly">Manadsvis</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Paminnelse</label>
+          <select id="f-reminder" onchange="toggleCustomReminder()">
+            <option value="none">Ingen</option>
+            <option value="onday">Pa dagen 09:00</option>
+            <option value="1day">1 dag innan</option>
+            <option value="2days">2 dagar innan</option>
+            <option value="1week">1 vecka innan</option>
+            <option value="custom">Anpassad</option>
+          </select>
+        </div>
+      </div>
+      <div id="custom-reminder-wrap" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Paminnelsedatum</label>
+            <input type="date" id="f-reminder-date">
+          </div>
+          <div class="form-group">
+            <label>Paminnelsetid</label>
+            <input type="time" id="f-reminder-time" value="09:00">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>E-post for paminnelse (valfri)</label>
+        <input type="email" id="f-reminder-email" placeholder="namn@exempel.se">
+      </div>
+      <div class="form-group">
+        <label>Taggar (kommaseparerade)</label>
+        <input type="text" id="f-tags" placeholder="t.ex. motet, kund, viktig">
+      </div>
+      <div class="form-group">
+        <label>Anteckningar</label>
+        <textarea id="f-notes" placeholder="Ytterligare detaljer..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeTaskModal()">Avbryt</button>
+      <button class="btn-primary" onclick="saveTask()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-backdrop" id="project-modal-backdrop" onclick="closeModalOnBackdrop(event,'project-modal-backdrop')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Nytt projekt</h2>
+      <button class="modal-close" onclick="closeProjectModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Projektnamn</label>
+        <input type="text" id="proj-name" placeholder="Projektets namn">
+      </div>
+      <div class="form-group">
+        <label>Farg</label>
+        <div class="color-picker" id="color-picker"></div>
+        <input type="hidden" id="proj-color" value="#2563EB">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeProjectModal()">Avbryt</button>
+      <button class="btn-primary" onclick="saveProject()">Skapa projekt</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI SUBTASK MODAL -->
+<div class="modal-backdrop" id="ai-subtask-backdrop" onclick="closeModalOnBackdrop(event,'ai-subtask-backdrop')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Dela upp uppgift</h2>
+      <button class="modal-close" onclick="document.getElementById('ai-subtask-backdrop').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Valj vilka deluppgifter som ska laggas till:</p>
+      <div class="subtask-list" id="subtask-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="document.getElementById('ai-subtask-backdrop').classList.remove('open')">Avbryt</button>
+      <button class="btn-primary" onclick="addSelectedSubtasks()">Lagg till valda</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI SUMMARY MODAL -->
+<div class="modal-backdrop" id="ai-summary-backdrop" onclick="closeModalOnBackdrop(event,'ai-summary-backdrop')">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <h2>Veckosammanfattning</h2>
+      <button class="modal-close" onclick="document.getElementById('ai-summary-backdrop').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ai-summary-text" id="ai-summary-text">Genererar sammanfattning...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="copyAiSummary()">Kopiera</button>
+      <button class="btn-secondary" onclick="shareAiSummary()">Dela via e-post</button>
+      <button class="btn-primary" onclick="document.getElementById('ai-summary-backdrop').classList.remove('open')">Stang</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI FLOAT TOOLBAR (for notes) -->
+<div class="ai-float-toolbar" id="ai-float-toolbar">
+  <button class="ai-float-btn" onclick="aiWriteAssist('improve')">Forbattra</button>
+  <button class="ai-float-btn" onclick="aiWriteAssist('shorten')">Forkorta</button>
+  <button class="ai-float-btn" onclick="aiWriteAssist('expand')">Expandera</button>
+  <button class="ai-float-btn" onclick="aiWriteAssist('bullets')">Punktlista</button>
+</div>
+
+<!-- NOTIFICATION BAR -->
+<div id="notif-bar"></div>
+
+<script>
+// =========================================================
+// STATE
+// =========================================================
+let state = { tasks: [], projects: [], notes: [] };
+let currentView = 'tasks';
+let filterPriority = 'all';
+let filterProject = null;
+let searchQuery = '';
+let sortByDate = false;
+let sortDateAsc = true;
+let saveTimer = null;
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let draggingTaskId = null;
+let aiSubtaskParentId = null;
+let aiEnabled = false;
+let activeNoteForAI = null;
+let activeNoteTextarea = null;
+
+const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
+
+// =========================================================
+// BRIDGE / API LAYER
+// =========================================================
+// pywebview injects window.pywebview asynchronously — we must wait for
+// the 'pywebviewready' event. If it never fires (browser mode), fall back
+// to a localStorage shim after a short timeout.
+const _localStorageApi = {
+  load: () => JSON.parse(localStorage.getItem('simpel_data') || '{"tasks":[],"projects":[],"notes":[]}'),
+  save: (data) => { localStorage.setItem('simpel_data', JSON.stringify(data)); return true; },
+  get_data_path: () => 'localStorage',
+  notify: (t, m) => console.log(`[notify] ${t}: ${m}`),
+  export_dialog: async (data) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'Simpel_export.json'; a.click();
+    URL.revokeObjectURL(url);
+    return {ok: true};
+  },
+  import_dialog: () => new Promise(resolve => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+    inp.onchange = e => {
+      const file = e.target.files[0]; if (!file) { resolve({ok:false}); return; }
+      const reader = new FileReader();
+      reader.onload = ev => { try { resolve({ok:true, data:JSON.parse(ev.target.result)}); } catch(err) { resolve({ok:false,error:err.message}); } };
+      reader.readAsText(file);
+    };
+    inp.click();
+  })
+};
+
+const bridge = {
+  _ready: false,
+  _queue: [],
+  _flush() { this._ready = true; this._queue.forEach(fn => fn()); this._queue = []; },
+  call(method, ...args) {
+    return new Promise((resolve, reject) => {
+      const exec = async () => {
+        try { resolve(await window.pywebview.api[method](...args)); }
+        catch(e) { reject(e); }
+      };
+      if (this._ready) exec(); else this._queue.push(exec);
+    });
+  }
+};
+
+// =========================================================
+// PERSIST
+// =========================================================
+async function persist() {
+  try { await bridge.call('save', state); } catch(e) { console.error('Save failed', e); }
+}
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persist, 500);
+}
+async function loadData() {
+  try {
+    const data = await bridge.call('load');
+    state.tasks = data.tasks || [];
+    state.projects = data.projects || [];
+    state.notes = data.notes || [];
+  } catch(e) {
+    console.error('Load failed', e);
+  }
+  renderAll();
+  checkReminders();
+}
+
+// =========================================================
+// TASK HELPERS
+// =========================================================
+function getPrioritySortVal(p) { return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
+
+function getFilteredTasks() {
+  let tasks = state.tasks.filter(t => !t.completed);
+  if (filterProject) tasks = tasks.filter(t => t.projectId === filterProject);
+  if (filterPriority !== 'all') tasks = tasks.filter(t => t.priority === filterPriority);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    tasks = tasks.filter(t =>
+      t.title.toLowerCase().includes(q) ||
+      (t.notes||'').toLowerCase().includes(q) ||
+      (t.tags||[]).some(tag => tag.toLowerCase().includes(q))
+    );
+  }
+  if (sortByDate) {
+    tasks.sort((a,b) => {
+      const da = a.deadline||'9999-99-99', db = b.deadline||'9999-99-99';
+      return sortDateAsc ? da.localeCompare(db) : db.localeCompare(da);
+    });
+  } else {
+    tasks.sort((a,b) => getPrioritySortVal(a.priority) - getPrioritySortVal(b.priority));
+  }
+  return tasks;
+}
+
+function getDeadlineClass(dl) {
+  if (!dl) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dl+'T00:00:00');
+  const diff = Math.floor((d - today) / 86400000);
+  if (diff < 0) return 'overdue';
+  if (diff <= 2) return 'soon';
+  return '';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function nextRecurringDate(dl, recurring) {
+  if (!dl || recurring === 'none') return null;
+  const d = new Date(dl+'T00:00:00');
+  if (recurring === 'daily') d.setDate(d.getDate()+1);
+  else if (recurring === 'weekly') d.setDate(d.getDate()+7);
+  else if (recurring === 'monthly') d.setMonth(d.getMonth()+1);
+  return d.toISOString().split('T')[0];
+}
+
+// =========================================================
+// TASK CRUD
+// =========================================================
+function createTask(fields) {
+  const task = {
+    id: Date.now().toString() + Math.random().toString(36).slice(2,6),
+    title: fields.title || '(Namlös uppgift)',
+    notes: fields.notes || '',
+    projectId: fields.projectId || null,
+    recurring: fields.recurring || 'none',
+    deadline: fields.deadline || null,
+    tags: fields.tags || [],
+    priority: fields.priority || 'medium',
+    kanbanCol: fields.kanbanCol || 'todo',
+    completed: false,
+    completedAt: null,
+    reminder: fields.reminder || 'none',
+    reminderTime: fields.reminderTime || '09:00',
+    reminderDate: fields.reminderDate || null,
+    reminderEmail: fields.reminderEmail || null,
+    createdAt: new Date().toISOString()
+  };
+  state.tasks.unshift(task);
+  scheduleSave();
+  return task;
+}
+
+function updateTask(id, fields) {
+  const idx = state.tasks.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  Object.assign(state.tasks[idx], fields);
+  scheduleSave();
+}
+
+function deleteTask(id) {
+  if (!confirm('Ta bort uppgiften? Åtgärden kan inte ångras.')) return;
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  scheduleSave();
+  renderAll();
+}
+
+function completeTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.completed = true;
+  t.completedAt = new Date().toISOString();
+  t.kanbanCol = 'done';
+  if (t.recurring !== 'none' && t.deadline) {
+    const nextDl = nextRecurringDate(t.deadline, t.recurring);
+    if (nextDl) {
+      createTask({ ...t, id: undefined, completed: false, completedAt: null, deadline: nextDl, kanbanCol: 'todo' });
+    }
+  }
+  scheduleSave();
+  renderAll();
+}
+
+function restoreTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.completed = false;
+  t.completedAt = null;
+  t.kanbanCol = 'todo';
+  scheduleSave();
+  renderAll();
+}
+
+// =========================================================
+// TASK MODAL
+// =========================================================
+function openTaskModal(prefill = {}) {
+  document.getElementById('edit-task-id').value = '';
+  document.getElementById('task-modal-title').textContent = 'Ny uppgift';
+  document.getElementById('f-title').value = prefill.title || '';
+  document.getElementById('f-notes').value = prefill.notes || '';
+  document.getElementById('f-deadline').value = prefill.deadline || '';
+  document.getElementById('f-tags').value = (prefill.tags||[]).join(', ');
+  document.getElementById('f-recurring').value = prefill.recurring || 'none';
+  document.getElementById('f-reminder').value = prefill.reminder || 'none';
+  document.getElementById('f-reminder-date').value = prefill.reminderDate || '';
+  document.getElementById('f-reminder-time').value = prefill.reminderTime || '09:00';
+  document.getElementById('f-reminder-email').value = prefill.reminderEmail || '';
+  const prio = prefill.priority || 'medium';
+  document.querySelector(`input[name="priority"][value="${prio}"]`).checked = true;
+  populateProjectSelect(prefill.projectId || '');
+  toggleCustomReminder();
+  document.getElementById('task-modal-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('f-title').focus(), 100);
+}
+
+function openEditTaskModal(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  openTaskModal(t);
+  document.getElementById('edit-task-id').value = id;
+  document.getElementById('task-modal-title').textContent = 'Redigera uppgift';
+}
+
+function closeTaskModal() {
+  document.getElementById('task-modal-backdrop').classList.remove('open');
+}
+
+function saveTask() {
+  const id = document.getElementById('edit-task-id').value;
+  const fields = {
+    title: document.getElementById('f-title').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    deadline: document.getElementById('f-deadline').value || null,
+    projectId: document.getElementById('f-project').value || null,
+    recurring: document.getElementById('f-recurring').value,
+    reminder: document.getElementById('f-reminder').value,
+    reminderDate: document.getElementById('f-reminder-date').value || null,
+    reminderTime: document.getElementById('f-reminder-time').value || '09:00',
+    reminderEmail: document.getElementById('f-reminder-email').value.trim() || null,
+    tags: document.getElementById('f-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    priority: document.querySelector('input[name="priority"]:checked').value
+  };
+  const reminderEmail = fields.reminderEmail;
+  if (id) {
+    updateTask(id, fields);
+  } else {
+    const t = createTask(fields);
+    if (reminderEmail && t.deadline) {
+      const subject = encodeURIComponent(`Paminnelse: ${t.title}`);
+      const body = encodeURIComponent(`Uppgift: ${t.title}\nDeadline: ${formatDate(t.deadline)}\nPrioritet: ${t.priority}\n\n${t.notes}`);
+      window.location.href = `mailto:${reminderEmail}?subject=${subject}&body=${body}`;
+    }
+  }
+  closeTaskModal();
+  renderAll();
+}
+
+function toggleCustomReminder() {
+  const val = document.getElementById('f-reminder').value;
+  document.getElementById('custom-reminder-wrap').style.display = val === 'custom' ? 'block' : 'none';
+}
+
+function populateProjectSelect(selectedId = '') {
+  const sel = document.getElementById('f-project');
+  sel.innerHTML = '<option value="">Inget projekt</option>';
+  state.projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if (p.id === selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// =========================================================
+// QUICK ADD
+// =========================================================
+function quickAddTask() {
+  const title = document.getElementById('quick-title').value.trim();
+  const priority = document.getElementById('quick-priority').value;
+  createTask({ title: title || '(Namlös uppgift)', priority });
+  document.getElementById('quick-title').value = '';
+  renderAll();
+  showToast('Uppgift skapad', 'success');
+}
+
+function onQuickEnter(e) {
+  if (e.key === 'Enter') quickAddTask();
+}
+
+// =========================================================
+// FILTERS & SORT
+// =========================================================
+function setFilter(f, el) {
+  filterPriority = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTaskList();
+}
+
+function toggleSort() {
+  if (!sortByDate) { sortByDate = true; sortDateAsc = true; }
+  else if (sortDateAsc) { sortDateAsc = false; }
+  else { sortByDate = false; }
+  const btn = document.getElementById('sort-btn');
+  btn.textContent = !sortByDate ? 'Sortera datum' : sortDateAsc ? 'Datum (stigande)' : 'Datum (fallande)';
+  renderTaskList();
+}
+
+function onSearch(q) {
+  searchQuery = q;
+  renderTaskList();
+}
+
+function filterByProject(id) {
+  filterProject = id;
+  document.querySelectorAll('.sb-project-item').forEach(el => el.classList.remove('active'));
+  if (!id) document.getElementById('proj-all').classList.add('active');
+  else document.querySelector(`.sb-project-item[data-id="${id}"]`)?.classList.add('active');
+  renderTaskList();
+}
+
+// =========================================================
+// RENDER: TASK LIST
+// =========================================================
+function renderTaskList() {
+  const tasks = getFilteredTasks();
+  const container = document.getElementById('task-list');
+  updateStats();
+  if (!tasks.length) {
+    container.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <p>Inga uppgifter</p><span>Lägg till din första uppgift ovan</span></div>`;
+    return;
+  }
+  container.innerHTML = tasks.map(t => renderTaskCard(t)).join('');
+}
+
+function renderTaskCard(t) {
+  const proj = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
+  const dlClass = getDeadlineClass(t.deadline);
+  const tags = (t.tags||[]).map(tag => `<span class="task-tag">${escHtml(tag)}</span>`).join('');
+  const projHtml = proj ? `<span class="task-project"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="${proj.color}"/></svg>${escHtml(proj.name)}</span>` : '';
+  const dlHtml = t.deadline ? `<span class="task-deadline ${dlClass}"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4 .5a.5.5 0 00-1 0V1H2a2 2 0 00-2 2v11a2 2 0 002 2h12a2 2 0 002-2V3a2 2 0 00-2-2h-1V.5a.5.5 0 00-1 0V1H4V.5zM1 4h14v10a1 1 0 01-1 1H2a1 1 0 01-1-1V4z"/></svg>${formatDate(t.deadline)}${dlClass==='overdue'?' (Försenad)':dlClass==='soon'?' (Snart)':''}</span>` : '';
+  const notesPreview = t.notes ? `<div class="task-notes-preview">${escHtml(t.notes.slice(0,200))}</div>` : '';
+  const splitBtnClass = aiEnabled ? 'btn-split' : 'btn-split ai-disabled';
+  const splitBtnTitle = aiEnabled ? 'Dela upp med AI' : 'Kräver Ollama';
+  return `<div class="task-card priority-${t.priority}" id="tc-${t.id}">
+    <div class="task-header">
+      <input type="checkbox" class="task-checkbox" ${t.completed?'checked':''} onchange="completeTask('${t.id}')">
+      <span class="task-title ${t.completed?'done':''}">${escHtml(t.title)}</span>
+      <span class="priority-badge ${t.priority}">${t.priority==='high'?'Hög':t.priority==='medium'?'Medel':'Låg'}</span>
+    </div>
+    ${notesPreview}
+    <div class="task-meta">${tags}${dlHtml}${projHtml}</div>
+    <div class="task-actions">
+      <button class="btn-edit" onclick="openEditTaskModal('${t.id}')">Redigera</button>
+      <button class="btn-share" onclick="shareTask('${t.id}')">Dela</button>
+      <button class="btn-delete" onclick="deleteTask('${t.id}')">Ta bort</button>
+      <button class="${splitBtnClass}" onclick="${aiEnabled?`aiSplitTask('${t.id}')`:''}" title="${splitBtnTitle}">Dela upp</button>
+    </div>
+  </div>`;
+}
+
+function updateStats() {
+  const active = state.tasks.filter(t => !t.completed);
+  const today = new Date().toISOString().split('T')[0];
+  const todayTasks = active.filter(t => t.deadline === today).length;
+  const overdue = active.filter(t => t.deadline && t.deadline < today).length;
+  const done = state.tasks.filter(t => t.completed).length;
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat-chip"><span class="stat-num">${active.length}</span><span class="stat-label">Aktiva</span></div>
+    <div class="stat-chip"><span class="stat-num">${todayTasks}</span><span class="stat-label">Idag</span></div>
+    <div class="stat-chip high"><span class="stat-num">${overdue}</span><span class="stat-label">Forsenade</span></div>
+    <div class="stat-chip low-c"><span class="stat-num">${done}</span><span class="stat-label">Avklarade</span></div>
+  `;
+  document.getElementById('badge-tasks').textContent = active.length;
+  document.getElementById('badge-done').textContent = done;
+  document.getElementById('badge-notes').textContent = state.notes.length;
+}
+
+// =========================================================
+// RENDER: SIDEBAR PROJECTS
+// =========================================================
+function renderSidebarProjects() {
+  const container = document.getElementById('sidebar-projects');
+  container.innerHTML = state.projects.map(p => {
+    const count = state.tasks.filter(t => t.projectId === p.id && !t.completed).length;
+    return `<div class="sb-project-item" data-id="${p.id}" onclick="filterByProject('${p.id}')">
+      <span class="sb-project-dot" style="background:${p.color}"></span>
+      ${escHtml(p.name)}
+      <span class="sb-project-count">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+// =========================================================
+// PROJECT MODAL
+// =========================================================
+function openProjectModal() {
+  document.getElementById('proj-name').value = '';
+  renderColorPicker('#2563EB');
+  document.getElementById('project-modal-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('proj-name').focus(), 100);
+}
+function closeProjectModal() {
+  document.getElementById('project-modal-backdrop').classList.remove('open');
+}
+function renderColorPicker(selected) {
+  document.getElementById('color-picker').innerHTML = PROJECT_COLORS.map(c =>
+    `<div class="color-swatch ${c===selected?'selected':''}" style="background:${c}" onclick="selectProjectColor('${c}')"></div>`
+  ).join('');
+  document.getElementById('proj-color').value = selected;
+}
+function selectProjectColor(c) {
+  document.getElementById('proj-color').value = c;
+  renderColorPicker(c);
+}
+function saveProject() {
+  const name = document.getElementById('proj-name').value.trim();
+  if (!name) { showToast('Ange ett projektnamn', 'error'); return; }
+  state.projects.push({ id: Date.now().toString(), name, color: document.getElementById('proj-color').value });
+  scheduleSave();
+  closeProjectModal();
+  renderAll();
+}
+
+// =========================================================
+// RENDER: CALENDAR
+// =========================================================
+function renderCalendar() {
+  const months = ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
+  document.getElementById('cal-title').textContent = `${months[calMonth]} ${calYear}`;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const startOffset = (firstDay + 6) % 7; // Mon=0
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const tasksByDate = {};
+  state.tasks.filter(t => !t.completed && t.deadline).forEach(t => {
+    if (!tasksByDate[t.deadline]) tasksByDate[t.deadline] = [];
+    tasksByDate[t.deadline].push(t);
+  });
+  const days = ['Mon','Tis','Ons','Tor','Fre','Lor','Son'];
+  let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  // Prev month filler
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+  for (let i = startOffset-1; i >= 0; i--) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num" style="opacity:.35">${prevDays-i}</div></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayTasks = tasksByDate[dateStr] || [];
+    const chips = dayTasks.slice(0,3).map(t =>
+      `<div class="cal-task-chip priority-${t.priority}" onclick="openEditTaskModal('${t.id}')" title="${escHtml(t.title)}">${escHtml(t.title.slice(0,18))}</div>`
+    ).join('') + (dayTasks.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayTasks.length-3} till</div>` : '');
+    html += `<div class="cal-day${isToday?' today':''}" onclick="calDayClick('${dateStr}')">
+      <div class="cal-day-num">${d}</div>${chips}</div>`;
+  }
+  // Fill remaining cells
+  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+  let nextD = 1;
+  for (let i = startOffset + daysInMonth; i < totalCells; i++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num" style="opacity:.35">${nextD++}</div></div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calDayClick(dateStr) {
+  openTaskModal({ deadline: dateStr });
+}
+
+// =========================================================
+// RENDER: NOTES
+// =========================================================
+function renderNotes() {
+  const container = document.getElementById('notes-grid');
+  if (!state.notes.length) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Inga anteckningar</p><span>Klicka "+ Ny anteckning" för att starta</span></div>`;
+    return;
+  }
+  container.innerHTML = state.notes.map(n => `
+    <div class="note-card" id="note-${n.id}">
+      <textarea class="note-textarea" placeholder="Skriv din anteckning..."
+        onblur="saveNote('${n.id}', this.value)"
+        onfocus="setActiveNote('${n.id}', this)"
+        onmouseup="checkNoteSelection(event)">${escHtml(n.text)}</textarea>
+      <div class="note-footer">
+        <span class="note-date">${formatDateTime(n.updatedAt || n.createdAt)}</span>
+        <div class="note-actions">
+          <button class="btn-to-task" onclick="noteToTask('${n.id}')">Gör till uppgift</button>
+          <button class="btn-del-note" onclick="deleteNote('${n.id}')">Ta bort</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addNote() {
+  const note = { id: Date.now().toString(), text: '', createdAt: new Date().toISOString() };
+  state.notes.unshift(note);
+  scheduleSave();
+  renderNotes();
+  setTimeout(() => {
+    const ta = document.querySelector(`#note-${note.id} .note-textarea`);
+    if (ta) ta.focus();
+  }, 50);
+}
+
+function saveNote(id, text) {
+  const n = state.notes.find(n => n.id === id);
+  if (!n) return;
+  n.text = text;
+  n.updatedAt = new Date().toISOString();
+  scheduleSave();
+  const footer = document.querySelector(`#note-${id} .note-date`);
+  if (footer) footer.textContent = formatDateTime(n.updatedAt);
+}
+
+function deleteNote(id) {
+  if (!confirm('Ta bort anteckning?')) return;
+  state.notes = state.notes.filter(n => n.id !== id);
+  scheduleSave();
+  renderNotes();
+}
+
+function noteToTask(id) {
+  const n = state.notes.find(n => n.id === id);
+  if (!n) return;
+  openTaskModal({ title: n.text.split('\n')[0].slice(0,80), notes: n.text });
+}
+
+function setActiveNote(id, ta) {
+  activeNoteForAI = id;
+  activeNoteTextarea = ta;
+}
+
+function checkNoteSelection(e) {
+  if (!aiEnabled) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.toString().trim()) {
+    document.getElementById('ai-float-toolbar').classList.remove('visible');
+    return;
+  }
+  const toolbar = document.getElementById('ai-float-toolbar');
+  toolbar.style.left = (e.clientX - 80) + 'px';
+  toolbar.style.top = (e.clientY - 50) + 'px';
+  toolbar.classList.add('visible');
+}
+
+// =========================================================
+// RENDER: KANBAN
+// =========================================================
+function renderKanban() {
+  const cols = { todo: [], doing: [], done: [] };
+  state.tasks.filter(t => !t.completed).forEach(t => {
+    const col = cols[t.kanbanCol] || cols.todo;
+    col.push(t);
+  });
+  // Sort by priority within columns
+  Object.values(cols).forEach(arr => arr.sort((a,b) => getPrioritySortVal(a.priority) - getPrioritySortVal(b.priority)));
+  ['todo','doing','done'].forEach(col => {
+    const container = document.getElementById(`kb-${col}`);
+    document.getElementById(`kb-badge-${col}`).textContent = cols[col].length;
+    container.innerHTML = cols[col].map(t => `
+      <div class="kanban-card priority-${t.priority}" draggable="true"
+        ondragstart="kbDragStart(event,'${t.id}')"
+        onclick="openEditTaskModal('${t.id}')">
+        <div class="kanban-card-title">${escHtml(t.title)}</div>
+        <div class="kanban-card-meta">${t.deadline ? formatDate(t.deadline) : ''}${t.deadline&&t.tags?.length?' · ':''}${(t.tags||[]).slice(0,2).join(', ')}</div>
+      </div>`).join('');
+  });
+}
+
+function kbDragStart(e, id) {
+  draggingTaskId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.querySelector(`[ondragstart*="${id}"]`);
+    if (el) el.style.opacity = '0.5';
+  }, 0);
+}
+
+function kbDragOver(e, el) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.kanban-cards').forEach(c => c.classList.remove('drag-over'));
+  el.classList.add('drag-over');
+}
+
+function kbDrop(e, col) {
+  e.preventDefault();
+  document.querySelectorAll('.kanban-cards').forEach(c => c.classList.remove('drag-over'));
+  if (!draggingTaskId) return;
+  const t = state.tasks.find(t => t.id === draggingTaskId);
+  if (!t) return;
+  t.kanbanCol = col;
+  if (col === 'done') { t.completed = true; t.completedAt = new Date().toISOString(); }
+  else { t.completed = false; t.completedAt = null; }
+  draggingTaskId = null;
+  scheduleSave();
+  renderKanban();
+  updateStats();
+}
+
+// =========================================================
+// RENDER: COMPLETED
+// =========================================================
+function renderCompleted() {
+  const tasks = state.tasks.filter(t => t.completed);
+  const container = document.getElementById('completed-list');
+  if (!tasks.length) {
+    container.innerHTML = '<div class="empty-state"><p>Inga avklarade uppgifter</p></div>';
+    return;
+  }
+  container.innerHTML = tasks.map(t => `
+    <div class="completed-card">
+      <div class="completed-title">${escHtml(t.title)}</div>
+      <div class="completed-meta">Avklarad: ${t.completedAt ? formatDateTime(t.completedAt) : '—'}${t.deadline ? ' · Deadline: '+formatDate(t.deadline) : ''}</div>
+      <div class="completed-actions">
+        <button class="btn-restore" onclick="restoreTask('${t.id}')">Återöppna</button>
+        <button class="btn-delete" style="font-size:12px;font-weight:600;color:var(--high);border:1px solid var(--high);border-radius:5px;padding:3px 10px;background:none;cursor:pointer;" onclick="deleteTask('${t.id}')">Ta bort</button>
+      </div>
+    </div>`).join('');
+}
+
+// =========================================================
+// RENDER ALL
+// =========================================================
+function renderAll() {
+  renderTaskList();
+  renderSidebarProjects();
+  if (currentView === 'calendar') renderCalendar();
+  if (currentView === 'notes') renderNotes();
+  if (currentView === 'kanban') renderKanban();
+  if (currentView === 'completed') renderCompleted();
+}
+
+// =========================================================
+// VIEW SWITCHING
+// =========================================================
+const VIEW_TITLES = { tasks: 'Uppgifter', calendar: 'Kalender', notes: 'Anteckningar', kanban: 'Kanban', completed: 'Avklarade' };
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('[id$="-view"]').forEach(el => el.style.display = 'none');
+  document.getElementById(`${view}-view`).style.display = '';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+  document.getElementById('view-title').textContent = VIEW_TITLES[view] || view;
+  // Show/hide quick input
+  document.getElementById('quick-input-wrap').style.display = view === 'tasks' ? 'flex' : 'none';
+  if (view === 'calendar') renderCalendar();
+  if (view === 'notes') renderNotes();
+  if (view === 'kanban') renderKanban();
+  if (view === 'completed') renderCompleted();
+}
+
+// =========================================================
+// SHARE
+// =========================================================
+function shareTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  const proj = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
+  const subject = encodeURIComponent(`Uppgift: ${t.title}`);
+  const body = encodeURIComponent(
+    `Titel: ${t.title}\n` +
+    `Prioritet: ${t.priority === 'high' ? 'Hög' : t.priority === 'medium' ? 'Medel' : 'Låg'}\n` +
+    (t.deadline ? `Deadline: ${formatDate(t.deadline)}\n` : '') +
+    (proj ? `Projekt: ${proj.name}\n` : '') +
+    (t.tags?.length ? `Taggar: ${t.tags.join(', ')}\n` : '') +
+    (t.notes ? `\nAnteckningar:\n${t.notes}` : '')
+  );
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// =========================================================
+// EXPORT / IMPORT
+// =========================================================
+async function exportJSON() {
+  const res = await bridge.call('export_dialog', state);
+  if (res && res.ok) showToast('Exporterat till ' + (res.path || 'fil'), 'success');
+  else if (res && res.error) showToast('Export misslyckades: ' + res.error, 'error');
+}
+
+async function importJSON() {
+  const res = await bridge.call('import_dialog');
+  if (!res || !res.ok) return;
+  const data = res.data;
+  if (!data) return;
+  // Merge by ID, no duplicates
+  const existingIds = new Set(state.tasks.map(t => t.id));
+  (data.tasks || []).forEach(t => { if (!existingIds.has(t.id)) state.tasks.push(t); });
+  const existingProjIds = new Set(state.projects.map(p => p.id));
+  (data.projects || []).forEach(p => { if (!existingProjIds.has(p.id)) state.projects.push(p); });
+  const existingNoteIds = new Set(state.notes.map(n => n.id));
+  (data.notes || []).forEach(n => { if (!existingNoteIds.has(n.id)) state.notes.push(n); });
+  scheduleSave();
+  renderAll();
+  showToast('Data importerad', 'success');
+}
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') { showToast('SheetJS laddas, försök igen', 'error'); return; }
+  const wb = XLSX.utils.book_new();
+  // Sheet 1: Tasks
+  const taskRows = [['ID','Titel','Prioritet','Status','Deadline','Projekt','Taggar','Anteckningar','Skapad','Paminnelse']];
+  state.tasks.forEach(t => {
+    const proj = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
+    taskRows.push([t.id, t.title, t.priority, t.completed?'Avklarad':'Aktiv', t.deadline||'', proj?proj.name:'', (t.tags||[]).join(', '), t.notes||'', (t.createdAt||'').slice(0,10), t.reminder]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(taskRows), 'Uppgifter');
+  // Sheet 2: Notes
+  const noteRows = [['ID','Text','Skapad','Uppdaterad']];
+  state.notes.forEach(n => noteRows.push([n.id, n.text, (n.createdAt||'').slice(0,10), (n.updatedAt||'').slice(0,10)]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(noteRows), 'Anteckningar');
+  // Sheet 3: Projects
+  const projRows = [['ID','Namn','Farg','Aktiva uppgifter','Avklarade','Totalt']];
+  state.projects.forEach(p => {
+    const all = state.tasks.filter(t => t.projectId === p.id);
+    projRows.push([p.id, p.name, p.color, all.filter(t=>!t.completed).length, all.filter(t=>t.completed).length, all.length]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(projRows), 'Projekt');
+  // Sheet 4: Stats
+  const active = state.tasks.filter(t => !t.completed);
+  const done = state.tasks.filter(t => t.completed);
+  const today = new Date().toISOString().split('T')[0];
+  const overdue = active.filter(t => t.deadline && t.deadline < today);
+  const pct = state.tasks.length ? Math.round(done.length / state.tasks.length * 100) : 0;
+  const statsRows = [
+    ['Statistik','Värde'],
+    ['Totalt uppgifter', state.tasks.length],
+    ['Aktiva', active.length],
+    ['Avklarade', done.length],
+    ['Försenade', overdue.length],
+    ['Framsteg (%)', pct],
+    ['Antal projekt', state.projects.length],
+    ['Antal anteckningar', state.notes.length],
+    ['Exportdatum', new Date().toLocaleDateString('sv-SE')]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(statsRows), 'Statistik');
+  XLSX.writeFile(wb, 'Simpel_export.xlsx');
+  showToast('Excel exporterad', 'success');
+}
+
+// =========================================================
+// REMINDERS
+// =========================================================
+function getReminderDateTime(task) {
+  if (!task.reminder || task.reminder === 'none') return null;
+  const time = task.reminderTime || '09:00';
+  if (task.reminder === 'custom') {
+    if (!task.reminderDate) return null;
+    return new Date(`${task.reminderDate}T${time}`);
+  }
+  if (!task.deadline) return null;
+  const dl = new Date(task.deadline + 'T' + time);
+  if (task.reminder === 'onday') return dl;
+  if (task.reminder === '1day') { dl.setDate(dl.getDate()-1); return dl; }
+  if (task.reminder === '2days') { dl.setDate(dl.getDate()-2); return dl; }
+  if (task.reminder === '1week') { dl.setDate(dl.getDate()-7); return dl; }
+  return null;
+}
+
+function checkReminders() {
+  const now = Date.now();
+  state.tasks.filter(t => !t.completed && t.reminder !== 'none').forEach(t => {
+    if (t._notifFired) return;
+    const dt = getReminderDateTime(t);
+    if (!dt) return;
+    const diff = Math.abs(now - dt.getTime());
+    if (diff <= 60000) {
+      t._notifFired = true;
+      triggerNotification(t.title, `Påminnelse: ${t.title}${t.deadline ? ' · '+formatDate(t.deadline) : ''}`);
+    }
+  });
+}
+
+function triggerNotification(title, body) {
+  bridge.call('notify', title, body).catch(() => {});
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      new Notification('Simpel – ' + title, { body });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => {
+        if (p === 'granted') new Notification('Simpel – ' + title, { body });
+      });
+    }
+  }
+}
+
+setInterval(checkReminders, 60000);
+
+// =========================================================
+// AI — OLLAMA
+// =========================================================
+async function checkOllama() {
+  try {
+    const res = await fetch('http://localhost:11434/api/tags', { method: 'GET', signal: AbortSignal.timeout(2000) });
+    if (res.ok) {
+      aiEnabled = true;
+      document.getElementById('ai-dot').classList.add('active');
+      document.getElementById('ai-status-text').textContent = 'Ollama aktiv';
+      document.getElementById('ai-quick-btn').classList.remove('ai-disabled');
+    } else { aiEnabled = false; }
+  } catch {
+    aiEnabled = false;
+    document.getElementById('ai-dot').classList.remove('active');
+    document.getElementById('ai-status-text').textContent = 'Ollama ej aktiv';
+    document.getElementById('ai-quick-btn').classList.add('ai-disabled');
+  }
+  document.getElementById('ai-summary-btn')?.classList.toggle('ai-disabled', !aiEnabled);
+}
+
+async function ollamaGenerate(prompt, onToken) {
+  const res = await fetch('http://localhost:11434/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'llama3.1:8b', prompt, stream: true }),
+    signal: AbortSignal.timeout(30000)
+  });
+  if (!res.ok) throw new Error('Ollama svarade med ' + res.status);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = decoder.decode(value).split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line);
+        if (data.response) { full += data.response; if (onToken) onToken(data.response, full); }
+      } catch {}
+    }
+  }
+  return full;
+}
+
+// AI Function 1: Natural language → Task
+async function aiCreateFromInput() {
+  if (!aiEnabled) { showToast('Ollama är inte aktiv. Installera Ollama och ladda ner llama3.1:8b.', 'error'); return; }
+  const input = document.getElementById('quick-title').value.trim();
+  if (!input) { showToast('Skriv en beskrivning i snabbfältet först', 'error'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  const prompt = `Du är en assistent som extraherar uppgiftsinformation från fri text på svenska.\nSvara ENDAST med giltig JSON, inget annat.\nSchema: {"title": string, "deadline": "YYYY-MM-DD eller null", "priority": "high|medium|low", "tags": string[], "notes": string}\nText: "${input}"\nDatum idag: ${today}`;
+  document.getElementById('ai-quick-btn').textContent = '...';
+  try {
+    const raw = await ollamaGenerate(prompt, null);
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Ingen giltig JSON');
+    const parsed = JSON.parse(match[0]);
+    openTaskModal({ title: parsed.title || input, deadline: parsed.deadline || '', priority: parsed.priority || 'medium', tags: parsed.tags || [], notes: parsed.notes || '' });
+    document.getElementById('quick-title').value = '';
+  } catch (e) {
+    showToast('AI-fel: ' + e.message, 'error');
+  }
+  document.getElementById('ai-quick-btn').textContent = 'AI';
+}
+
+// AI Function 2: Split task into subtasks
+async function aiSplitTask(taskId) {
+  if (!aiEnabled) return;
+  const t = state.tasks.find(t => t.id === taskId);
+  if (!t) return;
+  aiSubtaskParentId = taskId;
+  const prompt = `Dela upp följande uppgift i 3-6 konkreta, genomförbara deluppgifter på svenska.\nSvara ENDAST med en JSON-array av strängar, inget annat.\nUppgift: "${t.title}"\nBeskrivning: "${t.notes || ''}"`;
+  const modal = document.getElementById('ai-subtask-backdrop');
+  const list = document.getElementById('subtask-list');
+  list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Genererar deluppgifter...</p>';
+  modal.classList.add('open');
+  try {
+    const raw = await ollamaGenerate(prompt, null);
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('Ingen giltig lista');
+    const subtasks = JSON.parse(match[0]);
+    list.innerHTML = subtasks.map((s, i) => `
+      <div class="subtask-item">
+        <input type="checkbox" id="sub-${i}" checked>
+        <label for="sub-${i}">${escHtml(s)}</label>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<p style="color:var(--high);font-size:13px;">Fel: ${e.message}</p>`;
+  }
+}
+
+function addSelectedSubtasks() {
+  const parent = state.tasks.find(t => t.id === aiSubtaskParentId);
+  const items = document.querySelectorAll('.subtask-item');
+  let added = 0;
+  items.forEach((item, i) => {
+    const cb = document.getElementById(`sub-${i}`);
+    if (cb && cb.checked) {
+      const label = item.querySelector('label').textContent;
+      createTask({ title: label, projectId: parent?.projectId || null, priority: parent?.priority || 'medium' });
+      added++;
+    }
+  });
+  document.getElementById('ai-subtask-backdrop').classList.remove('open');
+  renderAll();
+  showToast(`${added} deluppgifter skapade`, 'success');
+}
+
+// AI Function 3: Weekly summary
+async function aiWeeklySummary() {
+  if (!aiEnabled) { showToast('Ollama är inte aktiv', 'error'); return; }
+  const week = new Date(); week.setDate(week.getDate()-7);
+  const weekStr = week.toISOString();
+  const recent = state.tasks.filter(t => t.createdAt >= weekStr || (t.completedAt && t.completedAt >= weekStr));
+  const completed = recent.filter(t => t.completed).map(t => t.title);
+  const active = state.tasks.filter(t => !t.completed).slice(0,10).map(t => ({ title: t.title, priority: t.priority, deadline: t.deadline }));
+  const today = new Date().toISOString().split('T')[0];
+  const overdue = state.tasks.filter(t => !t.completed && t.deadline && t.deadline < today).map(t => t.title);
+  const summary = { avklarade: completed, aktiva_prioriterade: active, forsenade: overdue };
+  const prompt = `Skriv en professionell veckosammanfattning på svenska baserat på följande uppgiftsdata.\nMax 5 meningar. Inkludera: vad avklarades, vad är försenat, vad är prioriterat.\nData: ${JSON.stringify(summary)}`;
+  document.getElementById('ai-summary-text').textContent = '';
+  document.getElementById('ai-summary-backdrop').classList.add('open');
+  try {
+    await ollamaGenerate(prompt, (token, full) => {
+      document.getElementById('ai-summary-text').textContent = full;
+    });
+  } catch(e) {
+    document.getElementById('ai-summary-text').textContent = 'Fel: ' + e.message;
+  }
+}
+
+function copyAiSummary() {
+  const text = document.getElementById('ai-summary-text').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Kopierat!', 'success'));
+}
+
+function shareAiSummary() {
+  const text = document.getElementById('ai-summary-text').textContent;
+  const subject = encodeURIComponent('Veckosammanfattning från Simpel');
+  window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(text)}`;
+}
+
+// AI Function 4: Writing assist for notes
+async function aiWriteAssist(mode) {
+  if (!aiEnabled || !activeNoteTextarea) return;
+  document.getElementById('ai-float-toolbar').classList.remove('visible');
+  const sel = window.getSelection();
+  const selectedText = sel ? sel.toString().trim() : '';
+  if (!selectedText) return;
+  const prompts = {
+    improve: `Förbättra följande text på svenska. Svara ENDAST med den förbättrade texten:\n"${selectedText}"`,
+    shorten: `Förkorta följande text på svenska, behåll det viktigaste. Svara ENDAST med den förkortade texten:\n"${selectedText}"`,
+    expand: `Expandera följande text på svenska med mer detaljer. Svara ENDAST med den expanderade texten:\n"${selectedText}"`,
+    bullets: `Gör om följande text till en punktlista på svenska. Svara ENDAST med punktlistan:\n"${selectedText}"`
+  };
+  const originalText = activeNoteTextarea.value;
+  activeNoteTextarea.value = activeNoteTextarea.value.replace(selectedText, '(AI bearbetar...)');
+  try {
+    const result = await ollamaGenerate(prompts[mode], null);
+    activeNoteTextarea.value = originalText.replace(selectedText, result.trim());
+    if (activeNoteForAI) saveNote(activeNoteForAI, activeNoteTextarea.value);
+  } catch(e) {
+    activeNoteTextarea.value = originalText;
+    showToast('AI-fel: ' + e.message, 'error');
+  }
+}
+
+// =========================================================
+// KEYBOARD SHORTCUTS
+// =========================================================
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName.toLowerCase();
+  const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+    document.getElementById('ai-float-toolbar').classList.remove('visible');
+  }
+  if (!isInput && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); openTaskModal(); }
+  if (isInput && e.ctrlKey && e.code === 'Space') { e.preventDefault(); aiCreateFromInput(); }
+});
+
+document.addEventListener('click', e => {
+  const toolbar = document.getElementById('ai-float-toolbar');
+  if (!toolbar.contains(e.target) && !e.target.closest('.note-textarea')) {
+    toolbar.classList.remove('visible');
+  }
+});
+
+function closeModalOnBackdrop(e, backdropId) {
+  if (e.target.id === backdropId) {
+    document.getElementById(backdropId).classList.remove('open');
+  }
+}
+
+// =========================================================
+// UTILITIES
+// =========================================================
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('sv-SE') + ' ' + d.toLocaleTimeString('sv-SE', {hour:'2-digit',minute:'2-digit'});
+}
+
+function showToast(msg, type = '') {
+  const bar = document.getElementById('notif-bar');
+  const toast = document.createElement('div');
+  toast.className = 'notif-toast' + (type ? ' ' + type : '');
+  toast.textContent = msg;
+  bar.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 3500);
+}
+
+// =========================================================
+// INIT
+// =========================================================
+let _appInited = false;
+function initApp() {
+  if (_appInited) return;
+  _appInited = true;
+  loadData();
+  checkOllama();
+  setInterval(checkOllama, 30000);
+  renderColorPicker('#2563EB');
+}
+
+// pywebview native mode: fires when window.pywebview.api is ready
+window.addEventListener('pywebviewready', () => {
+  bridge._flush();
+  initApp();
+});
+
+// Browser / localStorage fallback: if pywebviewready hasn't fired after 400ms
+setTimeout(() => {
+  if (!bridge._ready) {
+    window.pywebview = { api: _localStorageApi };
+    bridge._flush();
+    initApp();
+  }
+}, 400);
+</script>
+</body>
+</html>
