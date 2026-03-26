@@ -322,6 +322,83 @@ a { color: inherit; text-decoration: none; }
   border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
 }
 .btn-del-note:hover { background: var(--high); color: #fff; }
+.btn-ai-structure {
+  font-size: 11px; font-weight: 600; color: #5B21B6; border: 1px solid #C4B5FD;
+  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: #EDE9FE;
+}
+.btn-ai-structure:hover { background: #5B21B6; color: #fff; }
+/* Template picker */
+.note-template-picker { position: relative; display: inline-block; }
+.note-template-picker-btn {
+  background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD;
+  border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+  transition: all .15s; cursor: pointer; display: flex; align-items: center; gap: 5px;
+}
+.note-template-picker-btn:hover, .note-template-picker-btn.active { background: #5B21B6; color: #fff; border-color: #5B21B6; }
+.template-dropdown {
+  display: none; position: absolute; bottom: calc(100% + 6px); left: 0;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.14); min-width: 200px; z-index: 1000;
+  padding: 6px;
+}
+.template-dropdown.open { display: block; }
+.template-dropdown-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-radius: 7px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: #374151; transition: background .12s;
+}
+.template-dropdown-item:hover { background: #EDE9FE; color: #5B21B6; }
+.template-dropdown-item .tpl-icon { font-size: 13px; flex-shrink: 0; opacity: .7; }
+.template-dropdown-empty { padding: 10px 12px; color: #9CA3AF; font-size: 12px; text-align: center; }
+.template-dropdown-manage { border-top: 1px solid #F3F4F6; margin-top: 4px; padding-top: 4px; }
+.template-dropdown-manage button {
+  width: 100%; text-align: left; padding: 8px 12px; border-radius: 7px;
+  font-size: 12px; color: #6B7280; cursor: pointer; transition: background .12s;
+}
+.template-dropdown-manage button:hover { background: #F3F4F6; color: #374151; }
+/* Prompt templates management panel */
+.pt-list-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: 8px; margin-bottom: 4px;
+  background: #F9FAFB; border: 1px solid #E5E7EB;
+}
+.pt-list-name { font-size: 13.5px; font-weight: 600; color: #1F2937; }
+.pt-list-actions { display: flex; gap: 6px; }
+.pt-btn-edit {
+  font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 6px;
+  background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; cursor: pointer; transition: all .12s;
+}
+.pt-btn-edit:hover { background: #5B21B6; color: #fff; }
+.pt-btn-delete {
+  font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 6px;
+  background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; cursor: pointer; transition: all .12s;
+}
+.pt-btn-delete:hover { background: #DC2626; color: #fff; }
+.pt-new-btn {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 10px; padding: 9px 14px; border-radius: 8px;
+  background: var(--accent); color: #fff; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .15s; border: none;
+}
+.pt-new-btn:hover { background: var(--accent-hover); }
+.pt-label { font-size: 12px; font-weight: 600; color: #6B7280; margin-bottom: 5px; display: block; }
+.pt-input {
+  width: 100%; padding: 8px 10px; border: 1px solid #D1D5DB; border-radius: 7px;
+  font-size: 13px; color: #1F2937; background: #fff; transition: border .15s;
+}
+.pt-input:focus { outline: none; border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+.pt-textarea {
+  width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 7px;
+  font-size: 12.5px; color: #1F2937; background: #fff; resize: vertical;
+  line-height: 1.55; transition: border .15s; min-height: 160px;
+}
+.pt-textarea:focus { outline: none; border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+.pt-placeholder-hint {
+  display: inline-block; margin-top: 5px; font-size: 11.5px; color: #6B7280;
+}
+.pt-placeholder-hint code {
+  background: #F3F4F6; padding: 1px 5px; border-radius: 4px; font-size: 11px; color: #4B5563;
+}
 
 /* AI writing toolbar */
 .ai-float-toolbar {
@@ -551,6 +628,12 @@ a { color: inherit; text-decoration: none; }
 
     <div class="sb-bottom">
       <div class="sb-divider" style="margin:0 0 8px;"></div>
+      <div class="sb-section-label" style="padding:0 12px 6px;">AI</div>
+      <button class="sb-btn" onclick="openPromptTemplatesPanel()">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15"><path d="M7.5 1a.5.5 0 01.457.295l1.5 3.25.05.118.125.02 3.5.508a.5.5 0 01.277.852l-2.53 2.466-.09.088.02.124.597 3.478a.5.5 0 01-.725.527L7.5 10.863l-3.181 1.673a.5.5 0 01-.725-.527l.597-3.478.02-.124-.09-.088L1.591 5.853a.5.5 0 01.277-.852l3.5-.508.125-.02.05-.118 1.5-3.25A.5.5 0 017.5 1z"/></svg>
+        Promptmallar
+      </button>
+      <div class="sb-divider" style="margin:8px 0;"></div>
       <div class="sb-section-label" style="padding:0 12px 6px;">Export</div>
       <button class="sb-btn" onclick="exportJSON()">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg>
@@ -811,6 +894,52 @@ a { color: inherit; text-decoration: none; }
       <button class="btn-secondary" onclick="copyAiSummary()">Kopiera</button>
       <button class="btn-secondary" onclick="shareAiSummary()">Dela via e-post</button>
       <button class="btn-primary" onclick="document.getElementById('ai-summary-backdrop').classList.remove('open')">Stang</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROMPT TEMPLATES MANAGEMENT MODAL -->
+<div class="modal-backdrop" id="prompt-templates-backdrop" style="display:none" onclick="if(event.target===this)closePromptTemplatesPanel()">
+  <div class="modal" style="max-width:540px;padding:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="ptanel-title" style="font-size:16px;font-weight:700">Promptmallar</h3>
+      <button onclick="closePromptTemplatesPanel()" style="font-size:18px;color:#9CA3AF;cursor:pointer;line-height:1;background:none;padding:2px 6px;border-radius:5px;transition:color .12s" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9CA3AF'">✕</button>
+    </div>
+    <!-- List view -->
+    <div id="pt-list-view">
+      <div id="pt-list"></div>
+      <button class="pt-new-btn" onclick="openNewTemplate()">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z"/></svg>
+        Ny mall
+      </button>
+    </div>
+    <!-- Edit / create view -->
+    <div id="pt-edit-view" style="display:none">
+      <div style="margin-bottom:12px">
+        <label class="pt-label">Namn</label>
+        <input id="pt-edit-name" class="pt-input" type="text" placeholder="T.ex. Sammanfatta">
+      </div>
+      <div>
+        <label class="pt-label">Prompt</label>
+        <textarea id="pt-edit-prompt" class="pt-textarea" placeholder="Skriv din prompt här...&#10;&#10;Använd {anteckning} där anteckningens text ska klistras in."></textarea>
+        <span class="pt-placeholder-hint">Använd <code>{anteckning}</code> som platshållare för anteckningens text.</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="cancelTemplateEdit()">Avbryt</button>
+        <button class="btn-primary" onclick="saveTemplateFromPanel()">Spara</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE STRUCTURE PREVIEW MODAL -->
+<div class="modal-backdrop" id="note-structure-backdrop" style="display:none" onclick="if(event.target===this)closeNoteStructureModal()">
+  <div class="modal" style="max-width:600px">
+    <h3 style="margin-bottom:12px">Strukturerad anteckning</h3>
+    <div id="note-structure-output" style="white-space:pre-wrap;min-height:120px;max-height:400px;overflow-y:auto;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;padding:12px;font-size:0.88rem;line-height:1.6"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button class="btn-secondary" onclick="closeNoteStructureModal()">Avbryt</button>
+      <button class="btn-primary" id="note-structure-accept-btn" onclick="acceptStructuredNote()" disabled>Ersätt anteckning</button>
     </div>
   </div>
 </div>
@@ -1348,6 +1477,10 @@ function renderNotes() {
       <div class="note-footer">
         <span class="note-date">${formatDateTime(n.updatedAt || n.createdAt)}</span>
         <div class="note-actions">
+          <div class="note-template-picker">
+            <button class="note-template-picker-btn" onclick="toggleNoteTemplatePicker('${n.id}', this)">✦ AI-mall <span style="font-size:9px;opacity:.8">▾</span></button>
+            <div class="template-dropdown" id="tpl-drop-${n.id}"></div>
+          </div>
           <button class="btn-to-task" onclick="noteToTask('${n.id}')">Gör till uppgift</button>
           <button class="btn-del-note" onclick="deleteNote('${n.id}')">Ta bort</button>
         </div>
@@ -1819,6 +1952,207 @@ async function aiWriteAssist(mode) {
 }
 
 // =========================================================
+// AI Function 5: Multi-template system
+// =========================================================
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'default-1',
+    name: 'Strukturera',
+    prompt: 'Strukturera följande anteckning på ett tydligt och välorganiserat sätt på svenska.\nAnvänd rubriker, punktlistor eller numrerade listor där det passar.\nSvara ENDAST med den strukturerade texten, inga förklaringar.\n\nAnteckning:\n{anteckning}'
+  },
+  {
+    id: 'default-2',
+    name: 'Sammanfatta',
+    prompt: 'Sammanfatta följande anteckning kort och koncist på svenska.\nSvara ENDAST med sammanfattningen, inga förklaringar.\n\nAnteckning:\n{anteckning}'
+  },
+  {
+    id: 'default-3',
+    name: 'Punktlista',
+    prompt: 'Gör om följande anteckning till en tydlig punktlista på svenska.\nSvara ENDAST med punktlistan.\n\nAnteckning:\n{anteckning}'
+  }
+];
+
+function getTemplates() {
+  try {
+    const stored = localStorage.getItem('simpel_prompt_templates');
+    const arr = stored ? JSON.parse(stored) : [];
+    return arr.length ? arr : DEFAULT_TEMPLATES;
+  } catch { return DEFAULT_TEMPLATES; }
+}
+function saveTemplates(arr) {
+  localStorage.setItem('simpel_prompt_templates', JSON.stringify(arr));
+}
+
+// Template picker dropdown on note cards
+let activeDropNoteId = null;
+
+function toggleNoteTemplatePicker(noteId, btn) {
+  const drop = document.getElementById('tpl-drop-' + noteId);
+  if (!drop) return;
+  const isOpen = drop.classList.contains('open');
+  document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.note-template-picker-btn.active').forEach(b => b.classList.remove('active'));
+  activeDropNoteId = null;
+  if (isOpen) return;
+  renderTemplateDropdown(noteId, drop);
+  drop.classList.add('open');
+  btn.classList.add('active');
+  activeDropNoteId = noteId;
+}
+
+function renderTemplateDropdown(noteId, drop) {
+  const templates = getTemplates();
+  const icons = ['✦', '◈', '◉', '▸', '◆', '●'];
+  if (!templates.length) {
+    drop.innerHTML = '<div class="template-dropdown-empty">Inga mallar</div>';
+    return;
+  }
+  drop.innerHTML = templates.map((t, i) => `
+    <div class="template-dropdown-item" onclick="applyTemplate('${escHtml(t.id)}','${noteId}')">
+      <span class="tpl-icon">${icons[i % icons.length]}</span>
+      ${escHtml(t.name)}
+    </div>
+  `).join('') + `<div class="template-dropdown-manage">
+    <button onclick="openPromptTemplatesPanel()">⚙ Hantera mallar</button>
+  </div>`;
+}
+
+function applyTemplate(templateId, noteId) {
+  document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.note-template-picker-btn.active').forEach(b => b.classList.remove('active'));
+  activeDropNoteId = null;
+  const tpl = getTemplates().find(t => t.id === templateId);
+  if (!tpl) return;
+  structureNote(noteId, tpl.prompt);
+}
+
+// Prompt Templates management panel
+let editingTemplateId = null;
+
+function openPromptTemplatesPanel() {
+  renderTemplateList();
+  showPtListView();
+  document.getElementById('prompt-templates-backdrop').style.display = 'flex';
+}
+function closePromptTemplatesPanel() {
+  document.getElementById('prompt-templates-backdrop').style.display = 'none';
+  editingTemplateId = null;
+}
+function showPtListView() {
+  document.getElementById('pt-list-view').style.display = '';
+  document.getElementById('pt-edit-view').style.display = 'none';
+  document.getElementById('ptanel-title').textContent = 'Promptmallar';
+}
+function renderTemplateList() {
+  const templates = getTemplates();
+  const el = document.getElementById('pt-list');
+  if (!templates.length) {
+    el.innerHTML = '<p style="color:#9CA3AF;font-size:13px;padding:8px 0">Inga mallar ännu.</p>';
+    return;
+  }
+  el.innerHTML = templates.map(t => `
+    <div class="pt-list-item">
+      <span class="pt-list-name">${escHtml(t.name)}</span>
+      <div class="pt-list-actions">
+        <button class="pt-btn-edit" onclick="editTemplate('${escHtml(t.id)}')">Redigera</button>
+        <button class="pt-btn-delete" onclick="deleteTemplate('${escHtml(t.id)}')">Ta bort</button>
+      </div>
+    </div>
+  `).join('');
+}
+function editTemplate(id) {
+  const tpl = getTemplates().find(t => t.id === id);
+  if (!tpl) return;
+  editingTemplateId = id;
+  document.getElementById('pt-edit-name').value = tpl.name;
+  document.getElementById('pt-edit-prompt').value = tpl.prompt;
+  document.getElementById('ptanel-title').textContent = 'Redigera mall';
+  document.getElementById('pt-list-view').style.display = 'none';
+  document.getElementById('pt-edit-view').style.display = '';
+}
+function openNewTemplate() {
+  editingTemplateId = null;
+  document.getElementById('pt-edit-name').value = '';
+  document.getElementById('pt-edit-prompt').value = '';
+  document.getElementById('ptanel-title').textContent = 'Ny mall';
+  document.getElementById('pt-list-view').style.display = 'none';
+  document.getElementById('pt-edit-view').style.display = '';
+}
+function cancelTemplateEdit() {
+  showPtListView();
+  editingTemplateId = null;
+}
+function saveTemplateFromPanel() {
+  const name = document.getElementById('pt-edit-name').value.trim();
+  const prompt = document.getElementById('pt-edit-prompt').value.trim();
+  if (!name) { showToast('Ange ett namn för mallen', 'error'); return; }
+  if (!prompt) { showToast('Prompten får inte vara tom', 'error'); return; }
+  if (!prompt.includes('{anteckning}')) { showToast('Prompten måste innehålla {anteckning}', 'error'); return; }
+  const templates = getTemplates();
+  if (editingTemplateId) {
+    const idx = templates.findIndex(t => t.id === editingTemplateId);
+    if (idx >= 0) templates[idx] = { id: editingTemplateId, name, prompt };
+  } else {
+    templates.push({ id: Date.now().toString(), name, prompt });
+  }
+  saveTemplates(templates);
+  showToast('Mall sparad');
+  renderTemplateList();
+  showPtListView();
+  editingTemplateId = null;
+}
+function deleteTemplate(id) {
+  let templates = getTemplates().filter(t => t.id !== id);
+  if (!templates.length) templates = DEFAULT_TEMPLATES.map(t => ({ ...t }));
+  saveTemplates(templates);
+  renderTemplateList();
+  showToast('Mall borttagen');
+}
+
+let structuringNoteId = null;
+let structuredNoteResult = '';
+
+async function structureNote(id, templatePrompt) {
+  if (!aiEnabled) { showToast('Ollama är inte tillgänglig', 'error'); return; }
+  const note = state.notes.find(n => n.id === id);
+  if (!note || !note.text.trim()) { showToast('Anteckningen är tom', 'error'); return; }
+  structuringNoteId = id;
+  structuredNoteResult = '';
+  const out = document.getElementById('note-structure-output');
+  out.textContent = 'Genererar...';
+  document.getElementById('note-structure-accept-btn').disabled = true;
+  document.getElementById('note-structure-backdrop').style.display = 'flex';
+  const prompt = (templatePrompt || getTemplates()[0].prompt).replace('{anteckning}', note.text);
+  try {
+    await ollamaGenerate(prompt, (token, full) => {
+      structuredNoteResult = full;
+      out.textContent = full;
+    });
+    document.getElementById('note-structure-accept-btn').disabled = false;
+  } catch(e) {
+    out.textContent = 'Fel: ' + e.message;
+  }
+}
+
+function closeNoteStructureModal() {
+  document.getElementById('note-structure-backdrop').style.display = 'none';
+  structuringNoteId = null;
+  structuredNoteResult = '';
+}
+
+function acceptStructuredNote() {
+  if (!structuringNoteId || !structuredNoteResult) return;
+  const note = state.notes.find(n => n.id === structuringNoteId);
+  if (note) {
+    note.text = structuredNoteResult.trim();
+    note.updatedAt = new Date().toISOString();
+    scheduleSave();
+    renderNotes();
+  }
+  closeNoteStructureModal();
+}
+
+// =========================================================
 // KEYBOARD SHORTCUTS
 // =========================================================
 document.addEventListener('keydown', e => {
@@ -1827,6 +2161,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
     document.getElementById('ai-float-toolbar').classList.remove('visible');
+    document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.note-template-picker-btn.active').forEach(b => b.classList.remove('active'));
+    activeDropNoteId = null;
   }
   if (!isInput && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); openTaskModal(); }
   if (isInput && e.ctrlKey && e.code === 'Space') { e.preventDefault(); aiCreateFromInput(); }
@@ -1836,6 +2173,11 @@ document.addEventListener('click', e => {
   const toolbar = document.getElementById('ai-float-toolbar');
   if (!toolbar.contains(e.target) && !e.target.closest('.note-textarea')) {
     toolbar.classList.remove('visible');
+  }
+  if (!e.target.closest('.note-template-picker')) {
+    document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.note-template-picker-btn.active').forEach(b => b.classList.remove('active'));
+    activeDropNoteId = null;
   }
 });
 
