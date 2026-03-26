@@ -849,11 +849,10 @@ let activeNoteTextarea = null;
 const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
 
 // =========================================================
-// BRIDGE / API LAYER
+// BRIDGE / API LAYER  (Tauri v2 + localStorage fallback)
 // =========================================================
-// pywebview injects window.pywebview asynchronously — we must wait for
-// the 'pywebviewready' event. If it never fires (browser mode), fall back
-// to a localStorage shim after a short timeout.
+
+// Tier 1: localStorage shim — used when opening Simpel.html directly in a browser
 const _localStorageApi = {
   load: () => JSON.parse(localStorage.getItem('simpel_data') || '{"tasks":[],"projects":[],"notes":[]}'),
   save: (data) => { localStorage.setItem('simpel_data', JSON.stringify(data)); return true; },
@@ -878,18 +877,26 @@ const _localStorageApi = {
   })
 };
 
+// Tier 2: Tauri v2 invoke wrapper
+// window.__TAURI_INTERNALS__ is injected by WebView2 synchronously before any
+// <script> runs — it is undefined when opening the file in a normal browser.
+const _tauriApi = window.__TAURI_INTERNALS__ ? {
+  load:          ()       => window.__TAURI_INTERNALS__.invoke('load'),
+  save:          (data)   => window.__TAURI_INTERNALS__.invoke('save', { data }),
+  get_data_path: ()       => window.__TAURI_INTERNALS__.invoke('get_data_path'),
+  notify:        (t, m)   => window.__TAURI_INTERNALS__.invoke('notify', { title: t, message: m }),
+  export_dialog: (data)   => window.__TAURI_INTERNALS__.invoke('export_dialog', { data }),
+  import_dialog: ()       => window.__TAURI_INTERNALS__.invoke('import_dialog'),
+} : null;
+
+// Tier 3: Electron contextBridge (window.electronApi sätts av preload.js)
+const _electronApi = window.electronApi || null;
+
+// Unified bridge — prioritetsordning: Electron → Tauri → localStorage
 const bridge = {
-  _ready: false,
-  _queue: [],
-  _flush() { this._ready = true; this._queue.forEach(fn => fn()); this._queue = []; },
   call(method, ...args) {
-    return new Promise((resolve, reject) => {
-      const exec = async () => {
-        try { resolve(await window.pywebview.api[method](...args)); }
-        catch(e) { reject(e); }
-      };
-      if (this._ready) exec(); else this._queue.push(exec);
-    });
+    const api = _electronApi || _tauriApi || _localStorageApi;
+    return Promise.resolve(api[method](...args));
   }
 };
 
@@ -1873,20 +1880,15 @@ function initApp() {
   renderColorPicker('#2563EB');
 }
 
-// pywebview native mode: fires when window.pywebview.api is ready
-window.addEventListener('pywebviewready', () => {
-  bridge._flush();
-  initApp();
-});
-
-// Browser / localStorage fallback: if pywebviewready hasn't fired after 400ms
-setTimeout(() => {
-  if (!bridge._ready) {
-    window.pywebview = { api: _localStorageApi };
-    bridge._flush();
-    initApp();
-  }
-}, 400);
+// Starta Ollama-kontrollen beroende på aktiv backend, sedan initiera appen.
+// Electron och Tauri hanterar sin del av Ollama vid uppstart på main-process-sidan,
+// men vi skickar ett extra anrop från frontend som fallback.
+if (_electronApi) {
+  _electronApi.ensure_ollama().catch(() => {});
+} else if (_tauriApi) {
+  window.__TAURI_INTERNALS__.invoke('ensure_ollama').catch(() => {});
+}
+initApp();
 </script>
 </body>
 </html>

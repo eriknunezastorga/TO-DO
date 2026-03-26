@@ -1,0 +1,37 @@
+{
+  "productName": "Simpel",
+  "version": "2.0.0",
+  "identifier": "se.simpel.app",
+  "build": {
+    "frontendDist": "../"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Simpel",
+        "url": "Simpel.html",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 920,
+        "minHeight": 640,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

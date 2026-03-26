@@ -1,0 +1,30 @@
+{
+  "name": "simpel",
+  "version": "2.0.0",
+  "description": "Lokal Windows task manager",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "se.simpel.app",
+    "productName": "Simpel",
+    "files": [
+      "main.js",
+      "preload.js",
+      "Simpel.html"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
