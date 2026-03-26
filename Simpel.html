@@ -648,9 +648,14 @@ a { color: inherit; text-decoration: none; }
         Exportera Excel
       </button>
       <div class="sb-divider" style="margin:8px 0;"></div>
-      <div style="padding:0 12px 6px;display:flex;align-items:center;gap:4px;">
-        <span class="ai-status-dot" id="ai-dot"></span>
-        <span style="font-size:12px;color:var(--sb-text)" id="ai-status-text">Ollama ej aktiv</span>
+      <div style="padding:0 12px 6px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="ai-status-dot" id="ai-dot"></span>
+          <span style="font-size:12px;color:var(--sb-text)" id="ai-status-text">Ollama ej aktiv</span>
+        </div>
+        <select id="ai-model-select" onchange="onAiModelChange(this.value)"
+          style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);width:100%;display:none;">
+        </select>
       </div>
     </div>
   </aside>
@@ -959,7 +964,7 @@ a { color: inherit; text-decoration: none; }
 // =========================================================
 // STATE
 // =========================================================
-let state = { tasks: [], projects: [], notes: [] };
+let state = { tasks: [], projects: [], notes: [], aiModel: '' };
 let currentView = 'tasks';
 let filterPriority = 'all';
 let filterProject = null;
@@ -1789,26 +1794,61 @@ async function checkOllama() {
   try {
     const res = await fetch('http://localhost:11434/api/tags', { method: 'GET', signal: AbortSignal.timeout(2000) });
     if (res.ok) {
+      const data = await res.json();
+      const models = (data.models || []).map(m => m.name).filter(Boolean);
+      populateModelSelect(models);
       aiEnabled = true;
       document.getElementById('ai-dot').classList.add('active');
       document.getElementById('ai-status-text').textContent = 'Ollama aktiv';
       document.getElementById('ai-quick-btn').classList.remove('ai-disabled');
-    } else { aiEnabled = false; }
+    } else { aiEnabled = false; setModelSelectOffline(); }
   } catch {
     aiEnabled = false;
     document.getElementById('ai-dot').classList.remove('active');
     document.getElementById('ai-status-text').textContent = 'Ollama ej aktiv';
     document.getElementById('ai-quick-btn').classList.add('ai-disabled');
+    setModelSelectOffline();
   }
   document.getElementById('ai-summary-btn')?.classList.toggle('ai-disabled', !aiEnabled);
 }
 
-async function ollamaGenerate(prompt, onToken) {
+function populateModelSelect(models) {
+  const sel = document.getElementById('ai-model-select');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if (models.length === 0) { setModelSelectOffline(); return; }
+  models.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  // Välj sparad modell, annars första
+  if (state.aiModel && models.includes(state.aiModel)) {
+    sel.value = state.aiModel;
+  } else {
+    sel.value = models[0];
+    if (state.aiModel !== models[0]) { state.aiModel = models[0]; saveData(); }
+  }
+  sel.style.display = '';
+}
+
+function setModelSelectOffline() {
+  const sel = document.getElementById('ai-model-select');
+  if (sel) sel.style.display = 'none';
+}
+
+function onAiModelChange(value) {
+  state.aiModel = value;
+  saveData();
+}
+
+async function ollamaGenerate(prompt, onToken, timeoutMs = 30000) {
   const res = await fetch('http://localhost:11434/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'llama3.1:8b', prompt, stream: true }),
-    signal: AbortSignal.timeout(30000)
+    body: JSON.stringify({ model: state.aiModel || 'llama3.1:8b', prompt, stream: true }),
+    signal: AbortSignal.timeout(timeoutMs)
   });
   if (!res.ok) throw new Error('Ollama svarade med ' + res.status);
   const reader = res.body.getReader();
@@ -1830,7 +1870,7 @@ async function ollamaGenerate(prompt, onToken) {
 
 // AI Function 1: Natural language → Task
 async function aiCreateFromInput() {
-  if (!aiEnabled) { showToast('Ollama är inte aktiv. Installera Ollama och ladda ner llama3.1:8b.', 'error'); return; }
+  if (!aiEnabled) { showToast('Ollama är inte aktiv. Installera Ollama och ladda ner en modell.', 'error'); return; }
   const input = document.getElementById('quick-title').value.trim();
   if (!input) { showToast('Skriv en beskrivning i snabbfältet först', 'error'); return; }
   const today = new Date().toISOString().split('T')[0];
@@ -1909,7 +1949,7 @@ async function aiWeeklySummary() {
   try {
     await ollamaGenerate(prompt, (token, full) => {
       document.getElementById('ai-summary-text').textContent = full;
-    });
+    }, 120000);
   } catch(e) {
     document.getElementById('ai-summary-text').textContent = 'Fel: ' + e.message;
   }
@@ -2127,7 +2167,7 @@ async function structureNote(id, templatePrompt) {
     await ollamaGenerate(prompt, (token, full) => {
       structuredNoteResult = full;
       out.textContent = full;
-    });
+    }, 120000);
     document.getElementById('note-structure-accept-btn').disabled = false;
   } catch(e) {
     out.textContent = 'Fel: ' + e.message;

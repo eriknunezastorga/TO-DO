@@ -32,6 +32,13 @@ npm start          # Starta i dev-läge (Electron-fönster)
 npm run build      # Bygg installationsfil → dist\Simpel Setup 2.0.0.exe
 ```
 
+**Navigera till projektmappen i CMD:**
+```
+cd /d C:\Users\ba369\Desktop\Simpel
+npm start
+```
+> Flaggan `/d` krävs för att byta enhet och mapp samtidigt (t.ex. från `H:\` till `C:\`).
+
 > **OBS:** Kör alltid i **CMD** (inte PowerShell). PowerShell blockerar unsigned scripts (PSSecurityException).
 > Öppna CMD via `Win + R` → `cmd`, navigera till projektmappen och kör `npm start`.
 > Alternativt: kör `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` i PowerShell som administratör en gång för att lösa problemet permanent.
