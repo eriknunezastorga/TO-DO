@@ -4,6 +4,16 @@ Lokal Windows-uppgiftshanterare utan molnberoende. All data sparas lokalt.
 
 ---
 
+Hur du loggar in i testmiljön: 
+● Du klistrar in PowerShell-text i CMD. Ta bort "PS"-prefixet — skriv bara kommandona direkt:
+
+  Steg 1 — Navigera till mappen:                                                                                                                                                                                                          cd /d C:\Users\ba369\Desktop\Simpel
+                                                                                                                                                                                                                                        
+  Steg 2 — Starta appen:
+  npm start
+
+  Skriv varje kommando för sig och tryck Enter. Kopiera inte texten från ett PowerShell-fönster — skriv kommandona manuellt.
+
 ## Arkitektur
 
 ```

@@ -87,6 +87,10 @@ a { color: inherit; text-decoration: none; }
 .sb-project-item.active { background: var(--sb-active-bg); color: #fff; }
 .sb-project-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .sb-project-count { margin-left: auto; font-size: 11px; opacity: .6; }
+.sb-project-actions { display: none; gap: 2px; margin-left: 4px; }
+.sb-project-item:hover .sb-project-actions { display: flex; }
+.sb-project-actions button { background: none; border: none; color: var(--sb-text); cursor: pointer; padding: 0 3px; font-size: 12px; opacity: .7; line-height: 1; border-radius: 3px; }
+.sb-project-actions button:hover { opacity: 1; background: rgba(255,255,255,.15); }
 
 .sb-divider { height: 1px; background: rgba(255,255,255,.08); margin: 8px 16px; }
 .sb-bottom { margin-top: auto; padding: 0 8px; }
@@ -493,6 +497,7 @@ a { color: inherit; text-decoration: none; }
 }
 .modal-sm { max-width: 440px; }
 .modal-md { max-width: 580px; }
+.modal-form { max-width: 640px; }
 .modal-lg { max-width: 720px; }
 @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
 .modal-header {
@@ -502,27 +507,36 @@ a { color: inherit; text-decoration: none; }
 .modal-header h2 { font-size: 17px; font-weight: 700; }
 .modal-close { width: 30px; height: 30px; border-radius: 6px; background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: background .15s; }
 .modal-close:hover { background: var(--border); }
-.modal-body { padding: 20px 24px; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+.modal-body { padding: 22px 28px 14px; }
+.modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%; border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 12px; outline: none; background: var(--bg); transition: border .15s;
+  padding: 10px 14px; outline: none; background: var(--bg); transition: border .15s, box-shadow .15s;
+  font-size: 14px; font-family: inherit;
 }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); background: #fff; }
-.form-group textarea { min-height: 80px; resize: vertical; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--accent); background: #fff;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+}
+.form-group textarea {
+  min-height: 180px; resize: vertical;
+  line-height: 1.7; padding: 12px 14px;
+}
 .priority-radios { display: flex; gap: 8px; }
 .priority-radio { display: none; }
 .priority-label {
   padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
   cursor: pointer; border: 2px solid transparent; transition: all .15s;
 }
+.priority-label.none { color: #9CA3AF; border-color: #D1D5DB; background: #F3F4F6; }
 .priority-label.high { color: var(--high); border-color: #FCA5A5; background: #FEE2E2; }
 .priority-label.medium { color: var(--med); border-color: #FCD34D; background: #FEF3C7; }
 .priority-label.low { color: var(--low); border-color: #86EFAC; background: #DCFCE7; }
+.priority-radio:checked + .priority-label.none { background: #9CA3AF; color: #fff; border-color: #9CA3AF; }
 .priority-radio:checked + .priority-label.high { background: var(--high); color: #fff; border-color: var(--high); }
 .priority-radio:checked + .priority-label.medium { background: var(--med); color: #fff; border-color: var(--med); }
 .priority-radio:checked + .priority-label.low { background: var(--low); color: #fff; border-color: var(--low); }
@@ -754,7 +768,7 @@ a { color: inherit; text-decoration: none; }
 
 <!-- TASK MODAL -->
 <div class="modal-backdrop" id="task-modal-backdrop" onclick="closeModalOnBackdrop(event,'task-modal-backdrop')">
-  <div class="modal modal-md" id="task-modal">
+  <div class="modal modal-form" id="task-modal">
     <div class="modal-header">
       <h2 id="task-modal-title">Ny uppgift</h2>
       <button class="modal-close" onclick="closeTaskModal()">&#x2715;</button>
@@ -768,12 +782,14 @@ a { color: inherit; text-decoration: none; }
       <div class="form-group">
         <label>Prioritet</label>
         <div class="priority-radios">
+          <input type="radio" name="priority" id="p-none" value="none" class="priority-radio" checked>
+          <label for="p-none" class="priority-label none">Ingen</label>
           <input type="radio" name="priority" id="p-high" value="high" class="priority-radio">
-          <label for="p-high" class="priority-label high">Hog</label>
-          <input type="radio" name="priority" id="p-medium" value="medium" class="priority-radio" checked>
+          <label for="p-high" class="priority-label high">Hög</label>
+          <input type="radio" name="priority" id="p-medium" value="medium" class="priority-radio">
           <label for="p-medium" class="priority-label medium">Medel</label>
           <input type="radio" name="priority" id="p-low" value="low" class="priority-radio">
-          <label for="p-low" class="priority-label low">Lag</label>
+          <label for="p-low" class="priority-label low">Låg</label>
         </div>
       </div>
       <div class="form-row">
@@ -788,51 +804,13 @@ a { color: inherit; text-decoration: none; }
           </select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Aterkommer</label>
-          <select id="f-recurring">
-            <option value="none">Ingen</option>
-            <option value="daily">Dagligen</option>
-            <option value="weekly">Veckovis</option>
-            <option value="monthly">Manadsvis</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Paminnelse</label>
-          <select id="f-reminder" onchange="toggleCustomReminder()">
-            <option value="none">Ingen</option>
-            <option value="onday">Pa dagen 09:00</option>
-            <option value="1day">1 dag innan</option>
-            <option value="2days">2 dagar innan</option>
-            <option value="1week">1 vecka innan</option>
-            <option value="custom">Anpassad</option>
-          </select>
-        </div>
-      </div>
-      <div id="custom-reminder-wrap" style="display:none;">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Paminnelsedatum</label>
-            <input type="date" id="f-reminder-date">
-          </div>
-          <div class="form-group">
-            <label>Paminnelsetid</label>
-            <input type="time" id="f-reminder-time" value="09:00">
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>E-post for paminnelse (valfri)</label>
-        <input type="email" id="f-reminder-email" placeholder="namn@exempel.se">
-      </div>
       <div class="form-group">
         <label>Taggar (kommaseparerade)</label>
         <input type="text" id="f-tags" placeholder="t.ex. motet, kund, viktig">
       </div>
       <div class="form-group">
         <label>Anteckningar</label>
-        <textarea id="f-notes" placeholder="Ytterligare detaljer..."></textarea>
+        <textarea id="f-notes" rows="6" spellcheck="true" placeholder="Ytterligare detaljer..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -846,7 +824,7 @@ a { color: inherit; text-decoration: none; }
 <div class="modal-backdrop" id="project-modal-backdrop" onclick="closeModalOnBackdrop(event,'project-modal-backdrop')">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <h2>Nytt projekt</h2>
+      <h2 id="proj-modal-title">Nytt projekt</h2>
       <button class="modal-close" onclick="closeProjectModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -858,11 +836,12 @@ a { color: inherit; text-decoration: none; }
         <label>Farg</label>
         <div class="color-picker" id="color-picker"></div>
         <input type="hidden" id="proj-color" value="#2563EB">
+        <input type="hidden" id="proj-edit-id" value="">
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeProjectModal()">Avbryt</button>
-      <button class="btn-primary" onclick="saveProject()">Skapa projekt</button>
+      <button class="btn-primary" id="proj-save-btn" onclick="saveProject()">Skapa projekt</button>
     </div>
   </div>
 </div>
@@ -1184,18 +1163,15 @@ function openTaskModal(prefill = {}) {
   document.getElementById('edit-task-id').value = '';
   document.getElementById('task-modal-title').textContent = 'Ny uppgift';
   document.getElementById('f-title').value = prefill.title || '';
-  document.getElementById('f-notes').value = prefill.notes || '';
+  const notesEl = document.getElementById('f-notes');
+  notesEl.value = prefill.notes || '';
+  notesEl.style.height = 'auto';
+  notesEl.style.height = Math.max(notesEl.scrollHeight, 180) + 'px';
   document.getElementById('f-deadline').value = prefill.deadline || '';
   document.getElementById('f-tags').value = (prefill.tags||[]).join(', ');
-  document.getElementById('f-recurring').value = prefill.recurring || 'none';
-  document.getElementById('f-reminder').value = prefill.reminder || 'none';
-  document.getElementById('f-reminder-date').value = prefill.reminderDate || '';
-  document.getElementById('f-reminder-time').value = prefill.reminderTime || '09:00';
-  document.getElementById('f-reminder-email').value = prefill.reminderEmail || '';
-  const prio = prefill.priority || 'medium';
+  const prio = prefill.priority || 'none';
   document.querySelector(`input[name="priority"][value="${prio}"]`).checked = true;
   populateProjectSelect(prefill.projectId || '');
-  toggleCustomReminder();
   document.getElementById('task-modal-backdrop').classList.add('open');
   setTimeout(() => document.getElementById('f-title').focus(), 100);
 }
@@ -1219,33 +1195,18 @@ function saveTask() {
     notes: document.getElementById('f-notes').value.trim(),
     deadline: document.getElementById('f-deadline').value || null,
     projectId: document.getElementById('f-project').value || null,
-    recurring: document.getElementById('f-recurring').value,
-    reminder: document.getElementById('f-reminder').value,
-    reminderDate: document.getElementById('f-reminder-date').value || null,
-    reminderTime: document.getElementById('f-reminder-time').value || '09:00',
-    reminderEmail: document.getElementById('f-reminder-email').value.trim() || null,
     tags: document.getElementById('f-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-    priority: document.querySelector('input[name="priority"]:checked').value
+    priority: document.querySelector('input[name="priority"]:checked')?.value || null
   };
-  const reminderEmail = fields.reminderEmail;
   if (id) {
     updateTask(id, fields);
   } else {
-    const t = createTask(fields);
-    if (reminderEmail && t.deadline) {
-      const subject = encodeURIComponent(`Paminnelse: ${t.title}`);
-      const body = encodeURIComponent(`Uppgift: ${t.title}\nDeadline: ${formatDate(t.deadline)}\nPrioritet: ${t.priority}\n\n${t.notes}`);
-      window.location.href = `mailto:${reminderEmail}?subject=${subject}&body=${body}`;
-    }
+    createTask(fields);
   }
   closeTaskModal();
   renderAll();
 }
 
-function toggleCustomReminder() {
-  const val = document.getElementById('f-reminder').value;
-  document.getElementById('custom-reminder-wrap').style.display = val === 'custom' ? 'block' : 'none';
-}
 
 function populateProjectSelect(selectedId = '') {
   const sel = document.getElementById('f-project');
@@ -1376,6 +1337,10 @@ function renderSidebarProjects() {
       <span class="sb-project-dot" style="background:${p.color}"></span>
       ${escHtml(p.name)}
       <span class="sb-project-count">${count}</span>
+      <span class="sb-project-actions">
+        <button onclick="event.stopPropagation();openEditProjectModal('${p.id}')" title="Byt namn">✎</button>
+        <button onclick="event.stopPropagation();confirmDeleteProject('${p.id}')" title="Ta bort">✕</button>
+      </span>
     </div>`;
   }).join('');
 }
@@ -1385,7 +1350,21 @@ function renderSidebarProjects() {
 // =========================================================
 function openProjectModal() {
   document.getElementById('proj-name').value = '';
+  document.getElementById('proj-edit-id').value = '';
+  document.getElementById('proj-modal-title').textContent = 'Nytt projekt';
+  document.getElementById('proj-save-btn').textContent = 'Skapa projekt';
   renderColorPicker('#2563EB');
+  document.getElementById('project-modal-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('proj-name').focus(), 100);
+}
+function openEditProjectModal(id) {
+  const p = state.projects.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('proj-name').value = p.name;
+  document.getElementById('proj-edit-id').value = id;
+  document.getElementById('proj-modal-title').textContent = 'Redigera projekt';
+  document.getElementById('proj-save-btn').textContent = 'Spara ändringar';
+  renderColorPicker(p.color);
   document.getElementById('project-modal-backdrop').classList.add('open');
   setTimeout(() => document.getElementById('proj-name').focus(), 100);
 }
@@ -1405,10 +1384,32 @@ function selectProjectColor(c) {
 function saveProject() {
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { showToast('Ange ett projektnamn', 'error'); return; }
-  state.projects.push({ id: Date.now().toString(), name, color: document.getElementById('proj-color').value });
+  const editId = document.getElementById('proj-edit-id').value;
+  const color = document.getElementById('proj-color').value;
+  if (editId) {
+    const p = state.projects.find(x => x.id === editId);
+    if (p) { p.name = name; p.color = color; }
+  } else {
+    state.projects.push({ id: Date.now().toString(), name, color });
+  }
   scheduleSave();
   closeProjectModal();
   renderAll();
+}
+function confirmDeleteProject(id) {
+  const p = state.projects.find(x => x.id === id);
+  if (!p) return;
+  const count = state.tasks.filter(t => t.projectId === id && !t.completed).length;
+  const msg = count > 0
+    ? `Ta bort projektet "${p.name}"? ${count} uppgift(er) tappar sin projektkoppling.`
+    : `Ta bort projektet "${p.name}"?`;
+  if (!confirm(msg)) return;
+  state.projects = state.projects.filter(x => x.id !== id);
+  state.tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
+  if (filterProject === id) filterByProject(null);
+  scheduleSave();
+  renderAll();
+  showToast(`Projekt "${p.name}" borttaget`);
 }
 
 // =========================================================
@@ -2260,6 +2261,10 @@ function initApp() {
   checkOllama();
   setInterval(checkOllama, 30000);
   renderColorPicker('#2563EB');
+  document.getElementById('f-notes').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.max(this.scrollHeight, 180) + 'px';
+  });
 }
 
 // Starta Ollama-kontrollen beroende på aktiv backend, sedan initiera appen.
