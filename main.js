@@ -120,6 +120,7 @@ function createWindow() {
     minWidth: 920,
     minHeight: 640,
     title: 'Simpel',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

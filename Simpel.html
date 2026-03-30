@@ -671,9 +671,102 @@ a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+
+/* =========================================================
+   SPLASH SCREEN
+   ========================================================= */
+#splash-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #1e3060 0%, #3B4F7C 50%, #2d5fa6 100%);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .4s ease;
+}
+#splash-screen.hiding { opacity: 0; pointer-events: none; }
+.splash-inner {
+  width: 520px; max-width: 90vw;
+  display: flex; flex-direction: column; gap: 32px;
+}
+.splash-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.splash-title {
+  font-size: 3.2rem; font-weight: 700; color: #fff;
+  letter-spacing: -1px; line-height: 1;
+}
+.splash-title span { color: #93c5fd; }
+.splash-datetime {
+  text-align: right; color: rgba(255,255,255,.85);
+}
+.splash-clock {
+  font-size: 2.4rem; font-weight: 600; line-height: 1; letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.splash-date-label {
+  font-size: .85rem; color: rgba(255,255,255,.6); margin-top: 4px;
+  text-transform: capitalize;
+}
+.splash-tasks-section {}
+.splash-tasks-heading {
+  font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 10px;
+}
+.splash-task-list { display: flex; flex-direction: column; gap: 8px; }
+.splash-task-card {
+  background: rgba(255,255,255,.10); border-radius: 10px;
+  padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+  border-left: 4px solid transparent;
+  backdrop-filter: blur(4px);
+}
+.splash-task-card.prio-high  { border-left-color: var(--high); }
+.splash-task-card.prio-medium{ border-left-color: var(--med); }
+.splash-task-card.prio-low   { border-left-color: var(--low); }
+.splash-task-card.prio-none  { border-left-color: rgba(255,255,255,.3); }
+.splash-task-title {
+  flex: 1; font-size: .95rem; font-weight: 500; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.splash-task-meta {
+  font-size: .78rem; color: rgba(255,255,255,.55); white-space: nowrap;
+}
+.splash-task-meta.overdue { color: #fca5a5; }
+.splash-empty {
+  color: rgba(255,255,255,.4); font-size: .9rem; text-align: center;
+  padding: 20px 0;
+}
+.splash-btn {
+  align-self: center;
+  background: rgba(255,255,255,.15); color: #fff;
+  border: 1px solid rgba(255,255,255,.25); border-radius: 30px;
+  padding: 11px 32px; font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: background .2s, transform .1s;
+  backdrop-filter: blur(4px);
+}
+.splash-btn:hover { background: rgba(255,255,255,.25); transform: translateY(-1px); }
+.splash-btn:active { transform: translateY(0); }
 </style>
 </head>
 <body>
+
+<!-- ===================== SPLASH SCREEN ===================== -->
+<div id="splash-screen">
+  <div class="splash-inner">
+    <div class="splash-header">
+      <div class="splash-title">To<span>‑Do</span></div>
+      <div class="splash-datetime">
+        <div class="splash-clock" id="splash-clock">--:--:--</div>
+        <div class="splash-date-label" id="splash-date-label"></div>
+      </div>
+    </div>
+    <div class="splash-tasks-section">
+      <div class="splash-tasks-heading">Kommande uppgifter</div>
+      <div class="splash-task-list" id="splash-task-list">
+        <div class="splash-empty">Laddar uppgifter…</div>
+      </div>
+    </div>
+    <button class="splash-btn" onclick="hideSplash()">Öppna appen &rarr;</button>
+  </div>
+</div>
+
 <div id="app">
   <!-- ===================== SIDEBAR ===================== -->
   <aside id="sidebar">
@@ -1166,6 +1259,7 @@ async function loadData() {
   }
   renderAll();
   checkReminders();
+  renderSplashTasks();
 }
 
 // =========================================================
@@ -2531,6 +2625,69 @@ function showToast(msg, type = '') {
 }
 
 // =========================================================
+// SPLASH SCREEN
+// =========================================================
+let _splashClockTimer = null;
+
+function showSplash() {
+  function tick() {
+    const now = new Date();
+    const cl = document.getElementById('splash-clock');
+    const dl = document.getElementById('splash-date-label');
+    if (cl) cl.textContent = now.toLocaleTimeString('sv-SE');
+    if (dl) dl.textContent = now.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  tick();
+  _splashClockTimer = setInterval(tick, 1000);
+  document.addEventListener('keydown', _splashKeyHandler);
+}
+
+function _splashKeyHandler(e) {
+  if (e.key === 'Enter' || e.key === ' ') hideSplash();
+}
+
+function hideSplash() {
+  clearInterval(_splashClockTimer);
+  document.removeEventListener('keydown', _splashKeyHandler);
+  const el = document.getElementById('splash-screen');
+  if (!el) return;
+  el.classList.add('hiding');
+  setTimeout(() => el.remove(), 420);
+}
+
+function getSplashTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  const active = state.tasks.filter(t => !t.completed);
+  const withDeadline = active.filter(t => t.deadline).sort((a, b) => a.deadline.localeCompare(b.deadline));
+  const withoutDeadline = active.filter(t => !t.deadline);
+  return [...withDeadline, ...withoutDeadline].slice(0, 5);
+}
+
+function renderSplashTasks() {
+  const list = document.getElementById('splash-task-list');
+  if (!list) return;
+  const tasks = getSplashTasks();
+  const today = new Date().toISOString().split('T')[0];
+  if (!tasks.length) {
+    list.innerHTML = '<div class="splash-empty">Inga aktiva uppgifter</div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => {
+    const prio = t.priority || 'none';
+    let metaHtml = '';
+    if (t.deadline) {
+      const overdue = t.deadline < today;
+      const label = overdue ? 'Försenad · ' + formatDate(t.deadline) : formatDate(t.deadline);
+      metaHtml = `<span class="splash-task-meta${overdue ? ' overdue' : ''}">${label}</span>`;
+    }
+    return `<div class="splash-task-card prio-${prio}">
+      <span class="splash-task-title">${t.title}</span>
+      ${metaHtml}
+    </div>`;
+  }).join('');
+}
+
+// =========================================================
 // INIT
 // =========================================================
 let _appInited = false;
@@ -2555,6 +2712,7 @@ if (_electronApi) {
 } else if (_tauriApi) {
   window.__TAURI_INTERNALS__.invoke('ensure_ollama').catch(() => {});
 }
+showSplash();
 initApp();
 </script>
 </body>
