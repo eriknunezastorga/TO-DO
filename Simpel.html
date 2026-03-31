@@ -597,6 +597,41 @@ a { color: inherit; text-decoration: none; }
 .modal-body { padding: 22px 28px 14px; }
 .modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
+/* NOTE STRUCTURE MODAL — markdown output */
+.note-structure-output {
+  min-height: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+.note-structure-output h1 { font-size:1.2rem; font-weight:700; margin:0 0 10px; color:var(--text); }
+.note-structure-output h2 { font-size:1.05rem; font-weight:700; margin:14px 0 8px; color:var(--text); }
+.note-structure-output h3 { font-size:0.98rem; font-weight:600; margin:12px 0 6px; color:var(--text); }
+.note-structure-output p  { margin:0 0 10px; }
+.note-structure-output ul,
+.note-structure-output ol { margin:0 0 10px; padding-left:22px; }
+.note-structure-output li { margin-bottom:4px; }
+.note-structure-output strong { font-weight:700; }
+.note-structure-output em { font-style:italic; }
+.note-structure-output .ns-generating { color:var(--text-muted); font-style:italic; }
+@keyframes nsBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+.ns-cursor {
+  display:inline-block; width:2px; height:1.1em;
+  background:var(--accent); vertical-align:text-bottom;
+  margin-left:2px; animation:nsBlink 0.8s step-end infinite;
+}
+.ns-template-badge {
+  font-size:12px; font-weight:500; color:var(--text-muted);
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:20px; padding:2px 10px; margin-left:10px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;
+}
+
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .form-group { margin-bottom: 18px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
@@ -1140,11 +1175,19 @@ a { color: inherit; text-decoration: none; }
 </div>
 
 <!-- NOTE STRUCTURE PREVIEW MODAL -->
-<div class="modal-backdrop" id="note-structure-backdrop" style="display:none" onclick="if(event.target===this)closeNoteStructureModal()">
-  <div class="modal" style="max-width:600px">
-    <h3 style="margin-bottom:12px">Strukturerad anteckning</h3>
-    <div id="note-structure-output" style="white-space:pre-wrap;min-height:120px;max-height:400px;overflow-y:auto;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;padding:12px;font-size:0.88rem;line-height:1.6"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+<div class="modal-backdrop" id="note-structure-backdrop" onclick="if(event.target===this)closeNoteStructureModal()">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;min-width:0">
+        <h2>Strukturerad anteckning</h2>
+        <span class="ns-template-badge" id="ns-template-name"></span>
+      </div>
+      <button class="modal-close" onclick="closeNoteStructureModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="note-structure-output" id="note-structure-output"></div>
+    </div>
+    <div class="modal-footer">
       <button class="btn-secondary" onclick="closeNoteStructureModal()">Avbryt</button>
       <button class="btn-primary" id="note-structure-accept-btn" onclick="acceptStructuredNote()" disabled>Ersätt anteckning</button>
     </div>
@@ -2206,28 +2249,49 @@ function onAiModelChange(value) {
 }
 
 async function ollamaGenerate(prompt, onToken, timeoutMs = 30000) {
-  const res = await fetch('http://localhost:11434/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: state.aiModel || 'llama3.1:8b', prompt, stream: true }),
-    signal: AbortSignal.timeout(timeoutMs)
-  });
-  if (!res.ok) throw new Error('Ollama svarade med ' + res.status);
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let full = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const lines = decoder.decode(value).split('\n').filter(Boolean);
-    for (const line of lines) {
+  const controller = new AbortController();
+  let inactivityTimer = setTimeout(() => controller.abort(new Error('Ingen respons från Ollama')), timeoutMs);
+  const resetTimer = () => {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => controller.abort(new Error('Ingen respons från Ollama')), timeoutMs);
+  };
+  try {
+    const res = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: state.aiModel || 'llama3.1:8b', prompt, stream: true }),
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error('Ollama svarade med ' + res.status);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    let lineBuffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      resetTimer();
+      lineBuffer += decoder.decode(value, { stream: true });
+      const lines = lineBuffer.split('\n');
+      lineBuffer = lines.pop(); // spara ofullständig sista rad till nästa chunk
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const data = JSON.parse(line);
+          if (data.response) { full += data.response; if (onToken) onToken(data.response, full); }
+        } catch {}
+      }
+    }
+    if (lineBuffer.trim()) {
       try {
-        const data = JSON.parse(line);
+        const data = JSON.parse(lineBuffer);
         if (data.response) { full += data.response; if (onToken) onToken(data.response, full); }
       } catch {}
     }
+    return full;
+  } finally {
+    clearTimeout(inactivityTimer);
   }
-  return full;
 }
 
 // AI Function 1: Natural language → Task
@@ -2425,7 +2489,7 @@ function applyTemplate(templateId, noteId) {
   activeDropNoteId = null;
   const tpl = getTemplates().find(t => t.id === templateId);
   if (!tpl) return;
-  structureNote(noteId, tpl.prompt);
+  structureNote(noteId, tpl.prompt, tpl.name);
 }
 
 // Prompt Templates management panel
@@ -2514,30 +2578,64 @@ function deleteTemplate(id) {
 let structuringNoteId = null;
 let structuredNoteResult = '';
 
-async function structureNote(id, templatePrompt) {
+function renderMarkdown(md) {
+  let html = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  // Headings
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+  // Bold and italic
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+  // List items
+  html = html.replace(/^[*-] (.+)$/gm,  '<li>$1</li>');
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+  // Paragraphs: split on blank lines
+  const blockTag = /^<(h[1-3]|ul|ol|li|p)/;
+  html = html.split(/\n{2,}/).map(block => {
+    const t = block.trim();
+    if (!t) return '';
+    if (blockTag.test(t)) return t;
+    return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+  }).join('\n');
+  return html;
+}
+
+async function structureNote(id, templatePrompt, templateName) {
   if (!aiEnabled) { showToast('Ollama är inte tillgänglig', 'error'); return; }
   const note = state.notes.find(n => n.id === id);
   if (!note || !note.text.trim()) { showToast('Anteckningen är tom', 'error'); return; }
   structuringNoteId = id;
   structuredNoteResult = '';
   const out = document.getElementById('note-structure-output');
-  out.textContent = 'Genererar...';
-  document.getElementById('note-structure-accept-btn').disabled = true;
-  document.getElementById('note-structure-backdrop').style.display = 'flex';
+  const acceptBtn = document.getElementById('note-structure-accept-btn');
+  const badge = document.getElementById('ns-template-name');
+  badge.textContent = templateName || '';
+  badge.style.display = templateName ? '' : 'none';
+  out.innerHTML = '<span class="ns-generating">Genererar\u2026</span><span class="ns-cursor"></span>';
+  acceptBtn.disabled = true;
+  document.getElementById('note-structure-backdrop').classList.add('open');
   const prompt = (templatePrompt || getTemplates()[0].prompt).replace('{anteckning}', note.text);
   try {
     await ollamaGenerate(prompt, (token, full) => {
       structuredNoteResult = full;
-      out.textContent = full;
+      out.innerHTML = renderMarkdown(full) + '<span class="ns-cursor"></span>';
+      out.scrollTop = out.scrollHeight;
     }, 120000);
-    document.getElementById('note-structure-accept-btn').disabled = false;
+    out.innerHTML = renderMarkdown(structuredNoteResult);
+    acceptBtn.disabled = false;
   } catch(e) {
-    out.textContent = 'Fel: ' + e.message;
+    out.innerHTML = '<span style="color:var(--high)">Fel: ' + escHtml(e.message) + '</span>';
   }
 }
 
 function closeNoteStructureModal() {
-  document.getElementById('note-structure-backdrop').style.display = 'none';
+  document.getElementById('note-structure-backdrop').classList.remove('open');
   structuringNoteId = null;
   structuredNoteResult = '';
 }
