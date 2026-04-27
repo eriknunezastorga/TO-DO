@@ -133,3 +133,10 @@ README.txt        Snabbguide på svenska
 - **Lokal data**: Ingen server, ingen molntjänst, aldrig.
 - **Tre-tier bridge**: Samma `Simpel.html` körs i Electron, Tauri och webbläsare.
 - **Svenska UI**: Alla texter i gränssnittet är på svenska.
+
+Starta utvecklingsservern                                                                                                                                                                                              
+● Öppna CMD (inte PowerShell) och kör:
+                                                                                                                                                                                                           
+  cd /d C:\Users\ba369\Desktop\Simpel                                                                                                                                                                        npm start
+                                                                                                                                                                                                           
+  Det startar appen i Electron-fönster (dev-läge).
