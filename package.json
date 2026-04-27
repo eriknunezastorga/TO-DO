@@ -33,6 +33,14 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Simpel"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "eriknunezastorga",
+      "repo": "TO-DO"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
   }
 }

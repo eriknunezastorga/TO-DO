@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs   = require('fs');
 const path = require('path');
 const http = require('http');
@@ -132,10 +133,41 @@ function createWindow() {
   win.setMenuBarVisibility(false);
 }
 
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', () => {
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Simpel — Uppdatering hittad',
+        body: 'En ny version laddas ner i bakgrunden...',
+      }).show();
+    }
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Uppdatering redo',
+      message: 'En ny version av Simpel har laddats ner.',
+      detail: 'Starta om appen nu för att installera uppdateringen.',
+      buttons: ['Starta om nu', 'Senare'],
+      defaultId: 0,
+    }).then(({ response }) => {
+      if (response === 0) autoUpdater.quitAndInstall();
+    });
+  });
+
+  // Check on startup, then every 4 hours
+  autoUpdater.checkForUpdates().catch(() => {});
+  setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 60 * 60 * 1000);
+}
+
 app.whenReady().then(() => {
-  // Auto-start Ollama in background
   ensureOllama().catch(() => {});
   createWindow();
+  if (app.isPackaged) setupAutoUpdater();
 });
 
 app.on('window-all-closed', () => {

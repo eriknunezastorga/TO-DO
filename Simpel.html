@@ -392,6 +392,11 @@ a { color: inherit; text-decoration: none; }
   border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
 }
 .btn-del-note:hover { background: var(--high); color: #fff; }
+.btn-copy-note {
+  font-size: 11px; font-weight: 600; color: var(--text-muted); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: var(--surface2);
+}
+.btn-copy-note:hover { background: var(--surface3); color: var(--text); }
 .btn-ai-structure {
   font-size: 11px; font-weight: 600; color: #5B21B6; border: 1px solid #C4B5FD;
   border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: #EDE9FE;
@@ -973,6 +978,7 @@ a { color: inherit; text-decoration: none; }
                 <span class="notes-editor-wordcount" id="notes-editor-wordcount"></span>
               </div>
               <div class="notes-editor-actions">
+                <button class="btn-copy-note" onclick="copyNoteContent()" title="Kopiera anteckning">⎘ Kopiera</button>
                 <div class="note-template-picker">
                   <button class="note-template-picker-btn" id="editor-tpl-btn" onclick="toggleEditorTemplatePicker(this)">✦ AI-mall <span style="font-size:9px;opacity:.8">▾</span></button>
                   <div class="template-dropdown" id="editor-tpl-drop"></div>
@@ -2307,6 +2313,12 @@ function copyAiSummary() {
   navigator.clipboard.writeText(text).then(() => showToast('Kopierat!', 'success'));
 }
 
+function copyNoteContent() {
+  const ta = document.getElementById('notes-editor-textarea');
+  if (!ta || !ta.value.trim()) { showToast('Anteckningen är tom', 'error'); return; }
+  navigator.clipboard.writeText(ta.value).then(() => showToast('Kopierat!', 'success'));
+}
+
 function shareAiSummary() {
   const text = document.getElementById('ai-summary-text').textContent;
   const subject = encodeURIComponent('Veckosammanfattning från Simpel');
@@ -2330,7 +2342,7 @@ async function aiWriteAssist(mode) {
   activeNoteTextarea.value = activeNoteTextarea.value.replace(selectedText, '(AI bearbetar...)');
   try {
     const result = await ollamaGenerate(prompts[mode], null);
-    activeNoteTextarea.value = originalText.replace(selectedText, result.trim());
+    activeNoteTextarea.value = originalText.replace(selectedText, stripMarkdown(result.trim()));
     if (activeNoteForAI) saveNote(activeNoteForAI, activeNoteTextarea.value);
   } catch(e) {
     activeNoteTextarea.value = originalText;
@@ -2583,11 +2595,18 @@ function closeNoteStructureModal() {
   structuredNoteResult = '';
 }
 
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/^#{1,3}\s+/gm, '');
+}
+
 function acceptStructuredNote() {
   if (!structuringNoteId || !structuredNoteResult) return;
   const note = state.notes.find(n => n.id === structuringNoteId);
   if (note) {
-    note.text = structuredNoteResult.trim();
+    note.text = stripMarkdown(structuredNoteResult.trim());
     note.updatedAt = new Date().toISOString();
     scheduleSave();
     renderNotes();
