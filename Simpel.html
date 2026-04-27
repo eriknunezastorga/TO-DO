@@ -206,9 +206,8 @@ a { color: inherit; text-decoration: none; }
   padding: 16px 18px; transition: box-shadow .15s, transform .12s;
 }
 .task-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); transform: translateY(-1px); }
-.task-card:hover .task-actions { opacity: 1; }
-.task-header { display: flex; align-items: flex-start; gap: 10px; }
-.task-checkbox { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; flex-shrink: 0; accent-color: var(--accent); }
+.task-header { display: flex; align-items: center; gap: 10px; }
+.task-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: var(--accent); }
 .task-title { font-size: 14px; font-weight: 600; flex: 1; line-height: 1.4; word-break: break-word; }
 .task-title.done { text-decoration: line-through; opacity: .5; }
 .task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; margin-left: 28px; align-items: center; }
@@ -221,20 +220,14 @@ a { color: inherit; text-decoration: none; }
 .task-deadline.soon { color: var(--med); font-weight: 600; }
 .task-project { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .task-notes-preview { font-size: 12px; color: var(--text-muted); margin-top: 8px; margin-left: 28px; line-height: 1.5; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; border-top: 1px solid var(--border); padding-top: 6px; }
-.task-actions { display: flex; gap: 6px; margin-top: 10px; margin-left: 28px; opacity: 0; transition: opacity .2s ease; }
+.task-actions { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
 .task-actions button {
-  padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
-  border: 1px solid transparent; transition: all .15s;
+  width: 30px; height: 30px; border-radius: 7px; border: none; background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .13s, color .13s; color: #9CA3AF;
 }
-.btn-edit { color: var(--accent); border-color: var(--accent); }
-.btn-edit:hover { background: var(--accent); color: #fff; }
-.btn-share { color: var(--low); border-color: var(--low); }
-.btn-share:hover { background: var(--low); color: #fff; }
-.btn-delete { color: var(--high); border-color: var(--high); }
-.btn-delete:hover { background: var(--high); color: #fff; }
-.btn-split { color: #7C3AED; border-color: #7C3AED; }
-.btn-split:hover { background: #7C3AED; color: #fff; }
-.btn-split.ai-disabled { color: #9CA3AF; border-color: #9CA3AF; cursor: not-allowed; }
+.btn-edit:hover { background: var(--accent-lt); color: var(--accent); }
+.btn-delete:hover { background: #FEF2F2; color: var(--high); }
 
 .priority-badge {
   font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
@@ -572,6 +565,19 @@ a { color: inherit; text-decoration: none; }
 .modal-md { max-width: 580px; }
 .modal-form { max-width: 640px; }
 .modal-lg { max-width: 720px; }
+#task-modal {
+  display: flex; flex-direction: column;
+  height: 85vh; overflow: hidden;
+}
+#task-modal .modal-body {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+#task-modal .modal-body > .form-group:last-child {
+  flex: 1; display: flex; flex-direction: column;
+  margin-bottom: 0;
+}
+#task-modal .modal-body > .form-group:last-child textarea { flex: 1; min-height: 120px; }
 @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -631,7 +637,7 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 0 0 3px rgba(37,99,235,.10);
 }
 .form-group textarea {
-  min-height: 180px; resize: vertical;
+  min-height: 200px; resize: vertical;
   line-height: 1.7; padding: 12px 14px;
 }
 .priority-radios { display: flex; gap: 8px; }
@@ -658,11 +664,6 @@ a { color: inherit; text-decoration: none; }
 .btn-ai { background: #7C3AED; color: #fff; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 600; transition: background .15s; }
 .btn-ai:hover { background: #6D28D9; }
 
-/* AI Subtask preview */
-.subtask-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.subtask-item { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 8px; padding: 10px 12px; }
-.subtask-item input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
-.subtask-item label { font-size: 13px; flex: 1; cursor: pointer; }
 
 /* AI Summary */
 .ai-summary-text { background: var(--bg); border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.8; min-height: 80px; white-space: pre-wrap; }
@@ -1076,23 +1077,6 @@ a { color: inherit; text-decoration: none; }
   </div>
 </div>
 
-<!-- AI SUBTASK MODAL -->
-<div class="modal-backdrop" id="ai-subtask-backdrop" onclick="closeModalOnBackdrop(event,'ai-subtask-backdrop')">
-  <div class="modal modal-sm">
-    <div class="modal-header">
-      <h2>Dela upp uppgift</h2>
-      <button class="modal-close" onclick="document.getElementById('ai-subtask-backdrop').classList.remove('open')">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Valj vilka deluppgifter som ska laggas till:</p>
-      <div class="subtask-list" id="subtask-list"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="document.getElementById('ai-subtask-backdrop').classList.remove('open')">Avbryt</button>
-      <button class="btn-primary" onclick="addSelectedSubtasks()">Lagg till valda</button>
-    </div>
-  </div>
-</div>
 
 <!-- AI SUMMARY MODAL -->
 <div class="modal-backdrop" id="ai-summary-backdrop" onclick="closeModalOnBackdrop(event,'ai-summary-backdrop')">
@@ -1192,7 +1176,6 @@ let saveTimer = null;
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let draggingTaskId = null;
-let aiSubtaskParentId = null;
 let aiEnabled = false;
 let activeNoteForAI = null;
 let activeNoteTextarea = null;
@@ -1541,22 +1524,18 @@ function renderTaskCard(t) {
   const projHtml = proj ? `<span class="task-project"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="${proj.color}"/></svg>${escHtml(proj.name)}</span>` : '';
   const dlHtml = t.deadline ? `<span class="task-deadline ${dlClass}"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M4 .5a.5.5 0 00-1 0V1H2a2 2 0 00-2 2v11a2 2 0 002 2h12a2 2 0 002-2V3a2 2 0 00-2-2h-1V.5a.5.5 0 00-1 0V1H4V.5zM1 4h14v10a1 1 0 01-1 1H2a1 1 0 01-1-1V4z"/></svg>${formatDate(t.deadline)}${dlClass==='overdue'?' (Försenad)':dlClass==='soon'?' (Snart)':''}</span>` : '';
   const notesPreview = t.notes ? `<div class="task-notes-preview">${escHtml(stripMarkdown(t.notes).slice(0,200))}</div>` : '';
-  const splitBtnClass = aiEnabled ? 'btn-split' : 'btn-split ai-disabled';
-  const splitBtnTitle = aiEnabled ? 'Dela upp med AI' : 'Kräver Ollama';
   return `<div class="task-card priority-${t.priority}" id="tc-${t.id}">
     <div class="task-header">
       <input type="checkbox" class="task-checkbox" ${t.completed?'checked':''} onchange="completeTask('${t.id}')">
       <span class="task-title ${t.completed?'done':''}">${escHtml(stripMarkdown(t.title))}</span>
       <span class="priority-badge ${t.priority}">${t.priority==='high'?'Hög':t.priority==='medium'?'Medel':'Låg'}</span>
+      <div class="task-actions">
+        <button class="btn-edit" title="Redigera" onclick="openEditTaskModal('${t.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn-delete" title="Ta bort" onclick="deleteTask('${t.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+      </div>
     </div>
     ${notesPreview}
     <div class="task-meta">${tags}${dlHtml}${projHtml}</div>
-    <div class="task-actions">
-      <button class="btn-edit" onclick="openEditTaskModal('${t.id}')">Redigera</button>
-      <button class="btn-share" onclick="shareTask('${t.id}')">Dela</button>
-      <button class="btn-delete" onclick="deleteTask('${t.id}')">Ta bort</button>
-      <button class="${splitBtnClass}" onclick="${aiEnabled?`aiSplitTask('${t.id}')`:''}" title="${splitBtnTitle}">Dela upp</button>
-    </div>
   </div>`;
 }
 
@@ -2027,23 +2006,6 @@ function switchView(view) {
 }
 
 // =========================================================
-// SHARE
-// =========================================================
-function shareTask(id) {
-  const t = state.tasks.find(t => t.id === id);
-  if (!t) return;
-  const proj = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
-  const subject = encodeURIComponent(`Uppgift: ${t.title}`);
-  const body = encodeURIComponent(
-    `Titel: ${t.title}\n` +
-    `Prioritet: ${t.priority === 'high' ? 'Hög' : t.priority === 'medium' ? 'Medel' : 'Låg'}\n` +
-    (t.deadline ? `Deadline: ${formatDate(t.deadline)}\n` : '') +
-    (proj ? `Projekt: ${proj.name}\n` : '') +
-    (t.tags?.length ? `Taggar: ${t.tags.join(', ')}\n` : '') +
-    (t.notes ? `\nAnteckningar:\n${t.notes}` : '')
-  );
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
 
 // =========================================================
 // EXPORT / IMPORT
@@ -2282,48 +2244,6 @@ async function aiCreateFromInput() {
   }
 }
 
-// AI Function 2: Split task into subtasks
-async function aiSplitTask(taskId) {
-  if (!aiEnabled) return;
-  const t = state.tasks.find(t => t.id === taskId);
-  if (!t) return;
-  aiSubtaskParentId = taskId;
-  const prompt = `Dela upp följande uppgift i 3-6 konkreta, genomförbara deluppgifter på svenska.\nSvara ENDAST med en JSON-array av strängar, inget annat.\nUppgift: "${t.title}"\nBeskrivning: "${t.notes || ''}"`;
-  const modal = document.getElementById('ai-subtask-backdrop');
-  const list = document.getElementById('subtask-list');
-  list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Genererar deluppgifter...</p>';
-  modal.classList.add('open');
-  try {
-    const raw = await ollamaGenerate(prompt, null);
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('Ingen giltig lista');
-    const subtasks = JSON.parse(match[0]);
-    list.innerHTML = subtasks.map((s, i) => `
-      <div class="subtask-item">
-        <input type="checkbox" id="sub-${i}" checked>
-        <label for="sub-${i}">${escHtml(s)}</label>
-      </div>`).join('');
-  } catch(e) {
-    list.innerHTML = `<p style="color:var(--high);font-size:13px;">Fel: ${e.message}</p>`;
-  }
-}
-
-function addSelectedSubtasks() {
-  const parent = state.tasks.find(t => t.id === aiSubtaskParentId);
-  const items = document.querySelectorAll('.subtask-item');
-  let added = 0;
-  items.forEach((item, i) => {
-    const cb = document.getElementById(`sub-${i}`);
-    if (cb && cb.checked) {
-      const label = item.querySelector('label').textContent;
-      createTask({ title: label, projectId: parent?.projectId || null, priority: parent?.priority || 'medium' });
-      added++;
-    }
-  });
-  document.getElementById('ai-subtask-backdrop').classList.remove('open');
-  renderAll();
-  showToast(`${added} deluppgifter skapade`, 'success');
-}
 
 // AI Function 3: Weekly summary
 async function aiWeeklySummary() {
