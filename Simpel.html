@@ -138,37 +138,13 @@ a { color: inherit; text-decoration: none; }
 }
 #search-input {
   flex: 1; max-width: 320px;
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 7px 12px 7px 34px; font-size: 13px; outline: none;
+  border: 1px solid var(--border); border-radius: 99px;
+  padding: 7px 16px 7px 36px; font-size: 13px; outline: none;
   background: var(--bg); transition: border .15s;
 }
 #search-input:focus { border-color: var(--accent); background: #fff; }
 .search-wrap { position: relative; flex: 1; max-width: 320px; }
 .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 15px; height: 15px; pointer-events: none; }
-#quick-input-wrap { display: flex; align-items: center; gap: 6px; flex: 1; max-width: 400px; }
-#quick-title {
-  flex: 1; border: 1px solid var(--border); border-radius: 8px;
-  padding: 7px 12px; outline: none; background: var(--bg);
-  transition: border .15s; font-size: 13px;
-}
-#quick-title:focus { border-color: var(--accent); background: #fff; }
-#quick-priority {
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 7px 8px; background: var(--bg); outline: none; font-size: 13px; cursor: pointer;
-}
-#quick-add-btn {
-  background: var(--accent); color: #fff; border-radius: 8px;
-  padding: 7px 14px; font-size: 13px; font-weight: 600;
-  transition: background .15s; white-space: nowrap;
-}
-#quick-add-btn:hover { background: var(--accent-hover); }
-#ai-quick-btn {
-  background: #7C3AED; color: #fff; border-radius: 8px;
-  padding: 7px 12px; font-size: 13px; font-weight: 600;
-  transition: background .15s; white-space: nowrap;
-}
-#ai-quick-btn:hover { background: #6D28D9; }
-#ai-quick-btn.ai-disabled { background: #9CA3AF; cursor: not-allowed; }
 
 /* VIEW CONTAINER */
 #view-container { flex: 1; overflow-y: auto; padding: 20px 24px; }
@@ -904,16 +880,6 @@ a { color: inherit; text-decoration: none; }
       <div class="search-wrap">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
         <input type="text" id="search-input" placeholder="Sök uppgifter..." oninput="onSearch(this.value)">
-      </div>
-      <div id="quick-input-wrap">
-        <input type="text" id="quick-title" placeholder="Snabbt: skriv en uppgift och tryck Enter..." onkeydown="onQuickEnter(event)">
-        <select id="quick-priority">
-          <option value="medium">Medel</option>
-          <option value="high">Hög</option>
-          <option value="low">Låg</option>
-        </select>
-        <button id="quick-add-btn" onclick="quickAddTask()">Lägg till</button>
-        <button id="ai-quick-btn" onclick="aiCreateFromInput()" title="Skapa uppgift med AI (Ctrl+Space)">AI</button>
       </div>
     </div>
 
@@ -2053,8 +2019,6 @@ function switchView(view) {
   document.getElementById(`${view}-view`).style.display = '';
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
   document.getElementById('view-title').textContent = VIEW_TITLES[view] || view;
-  // Show/hide quick input
-  document.getElementById('quick-input-wrap').style.display = view === 'tasks' ? 'flex' : 'none';
   document.getElementById('view-container').classList.toggle('notes-active', view === 'notes');
   if (view === 'calendar') renderCalendar();
   if (view === 'notes') renderNotes();
@@ -2211,13 +2175,13 @@ async function checkOllama() {
       aiEnabled = true;
       document.getElementById('ai-dot').classList.add('active');
       document.getElementById('ai-status-text').textContent = 'Ollama aktiv';
-      document.getElementById('ai-quick-btn').classList.remove('ai-disabled');
+      document.getElementById('ai-quick-btn')?.classList.remove('ai-disabled');
     } else { aiEnabled = false; setModelSelectOffline(); }
   } catch {
     aiEnabled = false;
     document.getElementById('ai-dot').classList.remove('active');
     document.getElementById('ai-status-text').textContent = 'Ollama ej aktiv';
-    document.getElementById('ai-quick-btn').classList.add('ai-disabled');
+    document.getElementById('ai-quick-btn')?.classList.add('ai-disabled');
     setModelSelectOffline();
   }
   document.getElementById('ai-summary-btn')?.classList.toggle('ai-disabled', !aiEnabled);
@@ -2303,22 +2267,19 @@ async function ollamaGenerate(prompt, onToken, timeoutMs = 30000) {
 // AI Function 1: Natural language → Task
 async function aiCreateFromInput() {
   if (!aiEnabled) { showToast('Ollama är inte aktiv. Installera Ollama och ladda ner en modell.', 'error'); return; }
-  const input = document.getElementById('quick-title').value.trim();
-  if (!input) { showToast('Skriv en beskrivning i snabbfältet först', 'error'); return; }
+  const input = (window.prompt('Beskriv uppgiften (AI tolkar texten):') || '').trim();
+  if (!input) return;
   const today = new Date().toISOString().split('T')[0];
   const prompt = `Du är en assistent som extraherar uppgiftsinformation från fri text på svenska.\nSvara ENDAST med giltig JSON, inget annat.\nSchema: {"title": string, "deadline": "YYYY-MM-DD eller null", "priority": "high|medium|low", "tags": string[], "notes": string}\nText: "${input}"\nDatum idag: ${today}`;
-  document.getElementById('ai-quick-btn').textContent = '...';
   try {
     const raw = await ollamaGenerate(prompt, null);
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Ingen giltig JSON');
     const parsed = JSON.parse(match[0]);
     openTaskModal({ title: parsed.title || input, deadline: parsed.deadline || '', priority: parsed.priority || 'medium', tags: parsed.tags || [], notes: parsed.notes || '' });
-    document.getElementById('quick-title').value = '';
   } catch (e) {
     showToast('AI-fel: ' + e.message, 'error');
   }
-  document.getElementById('ai-quick-btn').textContent = 'AI';
 }
 
 // AI Function 2: Split task into subtasks
@@ -2672,7 +2633,6 @@ document.addEventListener('keydown', e => {
     activeDropNoteId = null;
   }
   if (!isInput && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); openTaskModal(); }
-  if (isInput && e.ctrlKey && e.code === 'Space') { e.preventDefault(); aiCreateFromInput(); }
 });
 
 document.addEventListener('click', e => {
