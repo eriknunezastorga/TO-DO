@@ -1,12 +1,13 @@
 {
   "name": "simpel",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Lokal Windows task manager",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "node scripts/generate-icon.js && electron-builder",
-    "build:noicon": "electron-builder"
+    "build:noicon": "electron-builder",
+    "release": "node scripts/generate-icon.js && electron-builder --publish always"
   },
   "devDependencies": {
     "electron": "^34.0.0",
@@ -37,7 +38,8 @@
     "publish": {
       "provider": "github",
       "owner": "eriknunezastorga",
-      "repo": "TO-DO"
+      "repo": "TO-DO",
+      "releaseType": "release"
     }
   },
   "dependencies": {
