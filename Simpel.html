@@ -12,18 +12,18 @@
    CSS VARIABLES & RESET
    ========================================================= */
 :root {
-  --sb-bg: #3B4F7C;
-  --sb-text: #B8C8E8;
+  --sb-bg: #0D3D4A;
+  --sb-text: #A8D8D0;
   --sb-active-bg: rgba(255,255,255,.14);
-  --accent: #2563EB;
-  --accent-lt: #EEF3FD;
-  --accent-hover: #1D4ED8;
-  --high: #DC2626;
+  --accent: #14B8A6;
+  --accent-lt: #CCFBF1;
+  --accent-hover: #0D9488;
+  --high: #E11D48;
   --med: #D97706;
   --low: #16A34A;
   --note-bg: #FEFCE8;
   --border: #E0E2EB;
-  --bg: #F2F3F7;
+  --bg: #F0FAFB;
   --surface: #FFFFFF;
   --text: #111827;
   --text-muted: #6B7280;
@@ -57,10 +57,10 @@ a { color: inherit; text-decoration: none; }
   flex-shrink: 0;
 }
 .sb-logo-icon {
-  width: 32px; height: 32px; background: var(--accent);
-  border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;
 }
-.sb-logo-icon svg { width: 18px; height: 18px; }
+.sb-logo-icon img { width: 32px; height: 32px; display: block; }
 .sb-logo-text { font-size: 18px; font-weight: 700; color: #fff; }
 .sb-section { padding: 12px 8px 4px; }
 .sb-section-label { font-size: 11px; font-weight: 600; color: var(--sb-text); text-transform: uppercase; letter-spacing: .06em; padding: 0 8px 6px; }
@@ -122,6 +122,8 @@ a { color: inherit; text-decoration: none; }
   padding: 10px 24px; display: flex; align-items: center; gap: 12px;
   flex-shrink: 0;
 }
+.topbar-brand { display: flex; align-items: center; gap: 8px; }
+.topbar-logo { width: 28px; height: 28px; border-radius: 6px; display: block; }
 #topbar h1 { font-size: 16px; font-weight: 600; color: var(--text); margin-right: 4px; white-space: nowrap; }
 #project-badge {
   display: inline-flex; align-items: center; gap: 6px;
@@ -179,13 +181,18 @@ a { color: inherit; text-decoration: none; }
 }
 .stat-chip {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 16px; font-size: 13px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border-top: 3px solid var(--border);
+  border-radius: 12px; padding: 10px 20px; font-size: 13px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-width: 80px;
 }
-.stat-chip .stat-num { font-size: 20px; font-weight: 700; }
-.stat-chip .stat-label { color: var(--text-muted); font-size: 11px; }
+.stat-chip .stat-num { font-size: 22px; font-weight: 700; color: var(--text); }
+.stat-chip .stat-label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.stat-chip.high { border-top-color: var(--high); }
 .stat-chip.high .stat-num { color: var(--high); }
+.stat-chip.med { border-top-color: var(--med); }
 .stat-chip.med .stat-num { color: var(--med); }
+.stat-chip.low-c { border-top-color: var(--low); }
 .stat-chip.low-c .stat-num { color: var(--low); }
 
 /* =========================================================
@@ -216,18 +223,14 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 16px; transition: background .15s;
 }
 #new-task-btn:hover { background: var(--accent-hover); }
-.task-list { display: flex; flex-direction: column; gap: 12px; }
+.task-list { display: flex; flex-direction: column; gap: 10px; }
 .task-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  border-left: 4px solid var(--border);
-  padding: 16px 18px; transition: box-shadow .15s;
+  border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  padding: 16px 18px; transition: box-shadow .15s, transform .12s;
 }
-.task-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.task-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); transform: translateY(-1px); }
 .task-card:hover .task-actions { opacity: 1; }
-.task-card.priority-high { border-left-color: var(--high); }
-.task-card.priority-medium { border-left-color: var(--med); }
-.task-card.priority-low { border-left-color: var(--low); }
 .task-header { display: flex; align-items: flex-start; gap: 10px; }
 .task-checkbox { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; flex-shrink: 0; accent-color: var(--accent); }
 .task-title { font-size: 14px; font-weight: 600; flex: 1; line-height: 1.4; word-break: break-word; }
@@ -258,11 +261,18 @@ a { color: inherit; text-decoration: none; }
 .btn-split.ai-disabled { color: #9CA3AF; border-color: #9CA3AF; cursor: not-allowed; }
 
 .priority-badge {
-  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase;
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
+  display: inline-flex; align-items: center; gap: 5px;
 }
-.priority-badge.high { background: #FEE2E2; color: var(--high); }
-.priority-badge.medium { background: #FEF3C7; color: var(--med); }
-.priority-badge.low { background: #DCFCE7; color: var(--low); }
+.priority-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.priority-badge.high { background: #FFF1F2; color: #BE123C; }
+.priority-badge.high::before { background: #FB7185; }
+.priority-badge.medium { background: #FFFBEB; color: #92400E; }
+.priority-badge.medium::before { background: #FBBF24; }
+.priority-badge.low { background: #F0FDF4; color: #166534; }
+.priority-badge.low::before { background: #4ADE80; }
 
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
 .empty-state svg { width: 48px; height: 48px; opacity: .3; margin-bottom: 12px; }
@@ -712,20 +722,20 @@ a { color: inherit; text-decoration: none; }
    ========================================================= */
 #splash-screen {
   position: fixed; inset: 0; z-index: 9999;
-  background: linear-gradient(135deg, #1e3060 0%, #3B4F7C 50%, #2d5fa6 100%);
+  background: linear-gradient(135deg, #072530 0%, #0D3D4A 50%, #1A5C6E 100%);
   display: flex; align-items: center; justify-content: center;
   transition: opacity .4s ease;
 }
 #splash-screen.hiding { opacity: 0; pointer-events: none; }
 .splash-inner {
-  width: 520px; max-width: 90vw;
-  display: flex; flex-direction: column; gap: 32px;
+  width: clamp(480px, 60vw, 1000px); max-width: 92vw;
+  display: flex; flex-direction: column; gap: clamp(20px, 3vh, 40px);
 }
 .splash-header {
   display: flex; align-items: flex-start; justify-content: space-between;
 }
 .splash-title {
-  font-size: 3.2rem; font-weight: 700; color: #fff;
+  font-size: clamp(2.4rem, 4.5vw, 5rem); font-weight: 700; color: #fff;
   letter-spacing: -1px; line-height: 1;
 }
 .splash-title span { color: #93c5fd; }
@@ -733,7 +743,7 @@ a { color: inherit; text-decoration: none; }
   text-align: right; color: rgba(255,255,255,.85);
 }
 .splash-clock {
-  font-size: 2.4rem; font-weight: 600; line-height: 1; letter-spacing: 1px;
+  font-size: clamp(1.8rem, 3.5vw, 4rem); font-weight: 600; line-height: 1; letter-spacing: 1px;
   font-variant-numeric: tabular-nums;
 }
 .splash-date-label {
@@ -749,19 +759,14 @@ a { color: inherit; text-decoration: none; }
 .splash-task-card {
   background: rgba(255,255,255,.10); border-radius: 10px;
   padding: 12px 14px; display: flex; align-items: center; gap: 12px;
-  border-left: 4px solid transparent;
   backdrop-filter: blur(4px);
 }
-.splash-task-card.prio-high  { border-left-color: var(--high); }
-.splash-task-card.prio-medium{ border-left-color: var(--med); }
-.splash-task-card.prio-low   { border-left-color: var(--low); }
-.splash-task-card.prio-none  { border-left-color: rgba(255,255,255,.3); }
 .splash-task-title {
-  flex: 1; font-size: .95rem; font-weight: 500; color: #fff;
+  flex: 1; font-size: clamp(.9rem, 1.3vw, 1.1rem); font-weight: 500; color: #fff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .splash-task-meta {
-  font-size: .78rem; color: rgba(255,255,255,.55); white-space: nowrap;
+  font-size: clamp(.72rem, 1vw, .9rem); color: rgba(255,255,255,.55); white-space: nowrap;
 }
 .splash-task-meta.overdue { color: #fca5a5; }
 .splash-empty {
@@ -807,9 +812,7 @@ a { color: inherit; text-decoration: none; }
   <aside id="sidebar">
     <div class="sb-logo">
       <div class="sb-logo-icon">
-        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 9.5L7 13.5L15 5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img src="assets/icon.png" alt="Simpel">
       </div>
       <span class="sb-logo-text">Simpel</span>
     </div>
@@ -893,7 +896,10 @@ a { color: inherit; text-decoration: none; }
   <div id="main">
     <!-- TOPBAR -->
     <div id="topbar">
-      <h1 id="view-title">Uppgifter</h1>
+      <div class="topbar-brand">
+        <img src="assets/icon.png" class="topbar-logo" alt="Simpel">
+        <h1 id="view-title">Uppgifter</h1>
+      </div>
       <span id="project-badge" style="display:none"></span>
       <div class="search-wrap">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
