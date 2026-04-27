@@ -1879,6 +1879,7 @@ function setActiveNote(id, ta) {
 
 function toggleEditorTemplatePicker(btn) {
   if (!activeNoteId) return;
+  if (!aiEnabled) { showToast('Ollama är inte aktiv — starta Ollama för att använda AI-mallar', 'error'); return; }
   const drop = document.getElementById('editor-tpl-drop');
   const isOpen = drop.classList.contains('open');
   document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
@@ -2150,6 +2151,7 @@ async function checkOllama() {
     setModelSelectOffline();
   }
   document.getElementById('ai-summary-btn')?.classList.toggle('ai-disabled', !aiEnabled);
+  document.getElementById('editor-tpl-btn')?.classList.toggle('ai-disabled', !aiEnabled);
 }
 
 function populateModelSelect(models) {
@@ -2500,7 +2502,7 @@ function renderMarkdown(md) {
 async function structureNote(id, templatePrompt, templateName) {
   if (!aiEnabled) { showToast('Ollama är inte tillgänglig', 'error'); return; }
   const note = state.notes.find(n => n.id === id);
-  if (!note || !note.text.trim()) { showToast('Anteckningen är tom', 'error'); return; }
+  if (!note || !(note.text || '').trim()) { showToast('Anteckningen är tom', 'error'); return; }
   structuringNoteId = id;
   structuredNoteResult = '';
   const out = document.getElementById('note-structure-output');
