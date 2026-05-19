@@ -733,6 +733,23 @@ a { color: inherit; text-decoration: none; }
   border-radius: 8px; padding: 10px 14px;
 }
 .welcome-footer-note svg { flex-shrink: 0; color: var(--accent); }
+.welcome-path-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; margin-top: 8px;
+}
+.welcome-path-row svg { flex-shrink: 0; color: var(--accent); }
+.welcome-path-value {
+  font-family: monospace; font-size: 11px; color: var(--text);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.welcome-path-copy {
+  flex-shrink: 0; background: none; border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+  color: var(--text-muted);
+}
+.welcome-path-copy:hover { background: var(--surface); color: var(--text); }
 .topbar-help-btn {
   width: 28px; height: 28px; border-radius: 6px;
   background: var(--bg); border: 1px solid var(--border);
@@ -1658,6 +1675,12 @@ a { color: inherit; text-decoration: none; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         Simpel sparar all data lokalt på din dator &mdash; ingen molntjänst, ingen inloggning och inga konton.
       </div>
+      <div class="welcome-path-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <span style="flex-shrink:0">Din datafil:</span>
+        <span class="welcome-path-value" id="welcome-data-path" title="">läser&hellip;</span>
+        <button class="welcome-path-copy" onclick="copyDataPath()" title="Kopiera sökväg">Kopiera</button>
+      </div>
       <div class="welcome-version-row">
         <span>Version <span id="welcome-version">&hellip;</span></span>
         <button class="welcome-update-btn" id="welcome-update-btn" onclick="manualCheckForUpdate()">Sök efter uppdateringar</button>
@@ -1963,9 +1986,26 @@ async function showWelcomeModal() {
       versionEl.textContent = 'webb';
     }
   }
+  const pathEl = document.getElementById('welcome-data-path');
+  if (pathEl) {
+    try {
+      const p = await bridge.call('get_data_path');
+      pathEl.textContent = p;
+      pathEl.title = p;
+    } catch { pathEl.textContent = '–'; }
+  }
   const statusEl = document.getElementById('welcome-update-status');
   if (statusEl) statusEl.textContent = '';
   document.getElementById('welcome-backdrop').classList.add('open');
+}
+async function copyDataPath() {
+  const p = document.getElementById('welcome-data-path')?.textContent;
+  if (!p || p === '–' || p === 'localStorage') return;
+  try {
+    await navigator.clipboard.writeText(p);
+    const btn = document.querySelector('.welcome-path-copy');
+    if (btn) { btn.textContent = 'Kopierat!'; setTimeout(() => { btn.textContent = 'Kopiera'; }, 1500); }
+  } catch {}
 }
 function closeWelcomeModal() {
   document.getElementById('welcome-backdrop').classList.remove('open');
