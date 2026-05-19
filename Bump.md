@@ -1,6 +1,8 @@
  Versionsuppdatering — arbetsflöde
 
-  ⚠ VIKTIGT — Bumpa ALLTID package.json FÖRE du skapar taggen.
+  ⚠ VIKTIGT — Bumpa ALLTID package.json FÖRE du skapar taggen, och se till att
+  alla andra ändringar är committade och pushade FÖRE bump-commiten — annars
+  hamnar de utanför taggen och kommer inte med i bygget.
 
   Electron-builder läser versionen från package.json, inte från git-taggen.
   Om du t.ex. taggar v2.4.0 medan package.json fortfarande säger 2.3.1:
@@ -10,6 +12,27 @@
 
   Symptom: GitHub Actions rapporterar "success" men ingen ny release dyker upp.
   Fix: radera taggen lokalt + på origin, bumpa package.json, commit, tagga om, pusha.
+
+  ---
+
+  Steg 0 — Säkerställ att allt är committat och pushat
+
+  Innan du bumpar versionen: kontrollera att working directory är ren OCH att
+  origin/master är ikapp med din lokala master. Annars riskerar du att tagga
+  en commit som inte innehåller alla dina senaste ändringar (CI checkar ut
+  taggen från GitHub — inte din lokala disk).
+
+    git status                    # Ska säga "nothing to commit, working tree clean"
+    git log origin/master..HEAD   # Ska vara tomt (inga opushade commits)
+
+  Om något ligger ocommittat:
+    git add <filer>
+    git commit -m "<beskrivande meddelande>"
+
+  Om något ligger opushat:
+    git push origin master
+
+  Först när båda kommandona ovan är tysta — gå vidare till Steg 1.
 
   ---
 
@@ -68,4 +91,4 @@
   └───────────────────┴──────────────────────┴───────────────┘
 
   ---
-  Kortversion: bumpa package.json → commit → tagg med v → pusha taggen — resten sköter sig självt.
+  Kortversion: commit + push allt pågående → bumpa package.json → commit → tagg med v → pusha taggen — resten sköter sig självt.
