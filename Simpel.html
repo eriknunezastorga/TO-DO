@@ -750,6 +750,49 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-muted);
 }
 .welcome-path-copy:hover { background: var(--surface); color: var(--text); }
+.welcome-path-details {
+  margin-top: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.welcome-path-details summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 500;
+}
+.welcome-path-details summary::-webkit-details-marker { display: none; }
+.welcome-path-details summary::before {
+  content: "\25B8";
+  font-size: 10px;
+  color: var(--accent);
+  transition: transform .15s;
+  display: inline-block;
+}
+.welcome-path-details[open] summary::before { transform: rotate(90deg); }
+.welcome-path-details summary:hover { color: var(--accent); }
+.welcome-path-details-body {
+  padding: 0 14px 12px 14px;
+  line-height: 1.5;
+}
+.welcome-path-details-body p { margin: 6px 0; }
+.welcome-path-details-body ul { margin: 6px 0; padding-left: 18px; }
+.welcome-path-details-body li { margin: 4px 0; }
+.welcome-path-details-body strong { color: var(--text); font-weight: 600; }
+.welcome-path-details-note {
+  margin-top: 10px !important;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
 .topbar-help-btn {
   width: 28px; height: 28px; border-radius: 6px;
   background: var(--bg); border: 1px solid var(--border);
@@ -1689,6 +1732,18 @@ a { color: inherit; text-decoration: none; }
         <span class="welcome-path-value" id="welcome-data-path" title="">läser&hellip;</span>
         <button class="welcome-path-copy" onclick="copyDataPath()" title="Kopiera sökväg">Kopiera</button>
       </div>
+      <details class="welcome-path-details">
+        <summary>Vad sparas i denna fil?</summary>
+        <div class="welcome-path-details-body">
+          <p>Allt du skapar i Simpel sparas i denna enda fil på din dator:</p>
+          <ul>
+            <li><strong>Dina uppgifter</strong> &mdash; titel, anteckningar, deadline, prioritet (hög/medel/låg), projekt, taggar, kanban-status (Att göra / Pågår / Klart), eventuella påminnelser och om uppgiften är klar.</li>
+            <li><strong>Dina projekt</strong> &mdash; namn och färg.</li>
+            <li><strong>Dina anteckningar</strong> &mdash; texten du skrivit, taggar och datum för när de skapades och ändrades senast.</li>
+          </ul>
+          <p class="welcome-path-details-note">Inget annat sparas. Simpel innehåller inga lösenord, ingen inloggning, ingen molntjänst och ingen historik utöver det du själv skriver. Du kan när som helst öppna filen i ett textprogram för att se exakt vad som finns där, eller flytta den till en annan dator för att ta med dig din data.</p>
+        </div>
+      </details>
     </div>
     <div class="modal-footer">
       <button class="btn-primary" onclick="closeWelcomeModal()">Kom igång &rarr;</button>
