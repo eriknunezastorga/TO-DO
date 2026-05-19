@@ -388,48 +388,6 @@ a { color: inherit; text-decoration: none; }
   font-size: 14px; line-height: 1.7; color: var(--text);
   padding: 20px 24px; outline: none; width: 100%; overflow-y: auto;
 }
-/* -------- FLIKRAD -------- */
-.notes-tabs-bar {
-  display: flex; align-items: stretch;
-  height: 38px; flex-shrink: 0;
-  background: #FFFBEB; border-bottom: 1px solid #FDE68A;
-  overflow-x: auto; overflow-y: hidden; gap: 0;
-}
-.notes-tabs-bar::-webkit-scrollbar { height: 3px; }
-.notes-tabs-bar::-webkit-scrollbar-thumb { background: #FDE68A; border-radius: 2px; }
-.note-tab {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 0 14px; cursor: pointer;
-  font-size: 12.5px; font-weight: 500; color: #92400E;
-  border-right: 1px solid #FDE68A; white-space: nowrap;
-  transition: background .12s; position: relative; flex-shrink: 0;
-}
-.note-tab:hover { background: #FEF9C3; }
-.note-tab.active {
-  background: var(--note-bg,#fff); color: #78350F; font-weight: 700;
-  border-bottom: 2px solid #CA8A04; margin-bottom: -1px;
-}
-.note-tab-label {
-  outline: none; background: transparent; border: none;
-  font: inherit; color: inherit; cursor: pointer; min-width: 30px; max-width: 110px;
-}
-.note-tab-label:focus { cursor: text; border-bottom: 1px dashed #CA8A04; }
-.note-tab-count {
-  font-size: 10px; opacity: .55; font-weight: 400;
-}
-.note-tab-close {
-  width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; font-size: 10px; color: #92400E; background: none;
-  opacity: 0; transition: opacity .12s, background .12s; cursor: pointer;
-}
-.note-tab:hover .note-tab-close { opacity: 1; }
-.note-tab-close:hover { background: #FBBF24; opacity: 1; }
-.note-tab-add-btn {
-  padding: 0 14px; height: 38px; font-size: 16px; color: #92400E;
-  background: none; cursor: pointer; flex-shrink: 0; opacity: .55;
-  transition: opacity .12s; display: flex; align-items: center;
-}
-.note-tab-add-btn:hover { opacity: 1; }
 /* -------- FORMAT-VERKTYGSFÄLT -------- */
 .notes-fmt-toolbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -511,7 +469,20 @@ a { color: inherit; text-decoration: none; }
   max-width: 100%; border-radius: 6px;
   margin: 8px 0; display: block;
 }
-.note-img-wrap { display: block; margin: 10px 0; }
+.note-img-wrap {
+  display: inline-block; margin: 10px 0;
+  position: relative; user-select: none; cursor: default;
+}
+.note-img-wrap img { display: block; max-width: 100%; border-radius: 6px; pointer-events: none; }
+.img-delete-btn {
+  display: none; position: absolute; top: 5px; right: 5px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(220,38,38,.9); color: #fff; font-size: 15px; font-weight: 700;
+  border: none; cursor: pointer; align-items: center; justify-content: center;
+  line-height: 1; z-index: 5; transition: background .12s;
+}
+.note-img-wrap:hover .img-delete-btn { display: flex; }
+.img-delete-btn:hover { background: #991b1b; }
 .note-img-caption {
   display: block; font-size: 11.5px; color: var(--text-muted);
   font-style: italic; margin-top: 4px; text-align: center;
@@ -1509,7 +1480,6 @@ let activeNoteTextarea = null;
 let activeNoteId = null;
 let noteSearchQuery = '';
 let noteTabsState = { tabs: [{ id: 'all', label: 'Alla', filter: null }], activeTabId: 'all' };
-let _savedImgRange = null;
 
 const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
 
@@ -3059,67 +3029,101 @@ function fmtInsertLink() {
   saveActiveNote();
 }
 
-function insertHtmlAtCaret(html, savedRange) {
+function _buildImgNode(base64) {
+  const wrap = document.createElement('span');
+  wrap.className = 'note-img-wrap';
+  wrap.contentEditable = 'false';
+  const img = document.createElement('img');
+  img.src = base64;
+  img.alt = 'Bild';
+  const btn = document.createElement('button');
+  btn.className = 'img-delete-btn';
+  btn.title = 'Ta bort bild';
+  btn.textContent = '×';
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    wrap.remove();
+    onEditorInput();
+    saveActiveNote();
+  });
+  wrap.appendChild(img);
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function _insertNodeAtRange(node, range) {
   const ed = document.getElementById('notes-editor-body');
   if (!ed) return;
-  ed.focus();
-  const sel = window.getSelection();
-  if (!sel) return;
-  let range;
-  if (savedRange) {
-    sel.removeAllRanges();
-    sel.addRange(savedRange);
-    range = savedRange;
-  } else if (sel.rangeCount > 0) {
-    range = sel.getRangeAt(0);
-  } else {
-    range = document.createRange();
-    range.selectNodeContents(ed);
-    range.collapse(false);
-  }
-  range.deleteContents();
-  const tpl = document.createElement('template');
-  tpl.innerHTML = html;
-  const frag = tpl.content;
-  const lastNode = frag.lastChild;
-  range.insertNode(frag);
-  if (lastNode) {
+  try {
+    if (range) {
+      range.deleteContents();
+      range.insertNode(node);
+    } else {
+      ed.appendChild(node);
+    }
     const r2 = document.createRange();
-    r2.setStartAfter(lastNode);
+    r2.setStartAfter(node);
     r2.collapse(true);
+    const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(r2);
+  } catch(_) {
+    ed.appendChild(node);
   }
+  ed.focus();
 }
 
 function fmtInsertImage() {
   if (!activeNoteId) return;
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  // Drop any old marker
+  const old = document.getElementById('__img_marker__');
+  if (old) old.remove();
+  // Plant a hidden marker at the current cursor so we know where to insert
   const sel = window.getSelection();
-  _savedImgRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+  if (sel && sel.rangeCount > 0) {
+    const marker = document.createElement('span');
+    marker.id = '__img_marker__';
+    marker.style.cssText = 'display:none;font-size:0;line-height:0;';
+    sel.getRangeAt(0).insertNode(marker);
+  }
   document.getElementById('note-img-input').click();
 }
 
-function _readFileAsImage(file, caption, savedRange) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result;
-    const imgHtml = caption
-      ? `<span class="note-img-wrap"><img src="${base64}" alt="${escHtml(caption)}"><span class="note-img-caption">${escHtml(caption)}</span></span>`
-      : `<img src="${base64}" alt="Bild">`;
-    insertHtmlAtCaret(imgHtml, savedRange || null);
-    saveActiveNote();
-  };
-  reader.readAsDataURL(file);
+function _placeCursorAfter(node) {
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  try {
+    const r = document.createRange();
+    r.setStartAfter(node);
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+  } catch(_) {}
+  ed.focus();
 }
 
 function onImageFileSelected(event) {
   const file = event.target.files[0];
   event.target.value = '';
   if (!file || !activeNoteId) return;
-  const saved = _savedImgRange;
-  _savedImgRange = null;
-  const caption = (window.prompt('Bildtext (valfri):', '') || '').trim();
-  _readFileAsImage(file, caption, saved);
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const node = _buildImgNode(ev.target.result);
+    const marker = document.getElementById('__img_marker__');
+    if (marker && marker.parentNode) {
+      marker.parentNode.replaceChild(node, marker);
+    } else {
+      const ed = document.getElementById('notes-editor-body');
+      if (ed) ed.appendChild(node);
+    }
+    _placeCursorAfter(node);
+    onEditorInput();
+    saveActiveNote();
+  };
+  reader.readAsDataURL(file);
 }
 
 function onEditorPaste(e) {
@@ -3131,7 +3135,16 @@ function onEditorPaste(e) {
       e.preventDefault();
       const blob = item.getAsFile();
       if (!blob) return;
-      _readFileAsImage(blob, '', null);
+      const sel = window.getSelection();
+      const range = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0) : null;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const node = _buildImgNode(ev.target.result);
+        _insertNodeAtRange(node, range);
+        onEditorInput();
+        saveActiveNote();
+      };
+      reader.readAsDataURL(blob);
       return;
     }
   }
@@ -3144,7 +3157,19 @@ function onEditorDrop(e) {
   for (const file of files) {
     if (file.type.startsWith('image/')) {
       e.preventDefault();
-      _readFileAsImage(file, '', null);
+      // Get drop position
+      let range = null;
+      if (document.caretRangeFromPoint) {
+        range = document.caretRangeFromPoint(e.clientX, e.clientY);
+      }
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const node = _buildImgNode(ev.target.result);
+        _insertNodeAtRange(node, range);
+        onEditorInput();
+        saveActiveNote();
+      };
+      reader.readAsDataURL(file);
       return;
     }
   }
