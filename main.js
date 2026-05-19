@@ -1,11 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, shell, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, shell } = require('electron');
 const fs    = require('fs');
 const path  = require('path');
 const http  = require('http');
 const https = require('https');
 const { spawn } = require('child_process');
-let nodemailer = null;
-try { nodemailer = require('nodemailer'); } catch (_) { /* installeras vid npm install */ }
 
 const UPDATE_REPO_OWNER = 'eriknunezastorga';
 const UPDATE_REPO_NAME  = 'TO-DO';
@@ -117,18 +115,35 @@ ipcMain.handle('save', (_event, data) => {
 
 ipcMain.handle('get_data_path', () => dataPath());
 
-ipcMain.handle('notify', (_event, title, message, taskId) => {
-  if (Notification.isSupported()) {
-    const n = new Notification({ title, body: message });
-    if (taskId && mainWindow) {
-      n.on('click', () => {
-        mainWindow.show();
-        mainWindow.focus();
-        mainWindow.webContents.send('open-task', taskId);
-      });
+function logNotification(line) {
+  try {
+    const dir = path.join(process.env.APPDATA || app.getPath('userData'), 'Simpel');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const logPath = path.join(dir, 'notification-log.txt');
+    const stat = fs.existsSync(logPath) ? fs.statSync(logPath) : null;
+    if (stat && stat.size > 100000) {
+      try { fs.renameSync(logPath, logPath + '.old'); } catch (_) {}
     }
-    n.show();
+    fs.appendFileSync(logPath, line + '\n', 'utf8');
+  } catch (_) { /* loggning får aldrig krascha appen */ }
+}
+
+ipcMain.handle('log_notification', (_e, line) => logNotification(String(line || '')));
+
+ipcMain.handle('notify', (_event, title, message, taskId) => {
+  const supported = Notification.isSupported();
+  logNotification(`${new Date().toISOString()} BACKEND notify taskId=${taskId || 'n/a'} supported=${supported}`);
+  if (!supported) return;
+  const n = new Notification({ title, body: message });
+  if (taskId && mainWindow) {
+    n.on('click', () => {
+      logNotification(`${new Date().toISOString()} CLICK taskId=${taskId}`);
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.webContents.send('open-task', taskId);
+    });
   }
+  n.show();
 });
 
 ipcMain.handle('export_dialog', async (_event, data) => {
@@ -164,106 +179,53 @@ ipcMain.handle('import_dialog', async () => {
 ipcMain.handle('ensure_ollama', () => ensureOllama());
 
 // =========================================================
-// EMAIL (SMTP via nodemailer + krypterad lagring via safeStorage)
+// NOTIFICATION CONFIG (enabled-flagga + firstRunSeen)
 // =========================================================
 
-function emailConfigPath() {
+function notifConfigPath() {
   const dir = path.join(process.env.APPDATA || app.getPath('userData'), 'Simpel');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, 'notification-config.json');
+}
+
+// Backward-compat: gamla installationer har email-config.json. Läs `enabled`-fältet om det finns,
+// så användare som tidigare stängt av aviseringar inte plötsligt får dem påslagna igen.
+function legacyEmailConfigPath() {
+  const dir = path.join(process.env.APPDATA || app.getPath('userData'), 'Simpel');
   return path.join(dir, 'email-config.json');
 }
 
-function readEmailConfig() {
+function readNotifConfig() {
   try {
-    const raw = fs.readFileSync(emailConfigPath(), 'utf8');
-    const c = JSON.parse(raw);
-    if (c.passwordEnc && safeStorage.isEncryptionAvailable()) {
-      try { c.password = safeStorage.decryptString(Buffer.from(c.passwordEnc, 'base64')); }
-      catch (_) { c.password = null; }
-    }
-    return c;
-  } catch (_) { return null; }
+    const raw = fs.readFileSync(notifConfigPath(), 'utf8');
+    return JSON.parse(raw);
+  } catch (_) {
+    // Fallback: läs gamla email-config.json om den finns och hämta enbart enabled-flaggan
+    try {
+      const raw = fs.readFileSync(legacyEmailConfigPath(), 'utf8');
+      const legacy = JSON.parse(raw);
+      return { enabled: legacy.enabled !== false, firstRunSeen: !!legacy.firstRunSeen };
+    } catch (_) { return null; }
+  }
 }
 
 ipcMain.handle('get_email_config', () => {
-  const c = readEmailConfig();
-  if (!c) return null;
+  const c = readNotifConfig();
   return {
-    enabled: !!c.enabled,
-    host: c.host || '',
-    port: c.port || 587,
-    user: c.user || '',
-    to: c.to || '',
-    hasPassword: !!c.passwordEnc,
+    enabled: c ? c.enabled !== false : true,
+    firstRunSeen: !!(c && c.firstRunSeen),
   };
 });
 
 ipcMain.handle('save_email_config', (_e, cfg) => {
   try {
+    const existing = readNotifConfig();
     const out = {
-      enabled: !!cfg.enabled,
-      host: (cfg.host || '').trim(),
-      port: Number(cfg.port) || 587,
-      user: (cfg.user || '').trim(),
-      to: (cfg.to || cfg.user || '').trim(),
+      enabled: cfg && cfg.enabled !== false,
+      firstRunSeen: (cfg && cfg.firstRunSeen === true) || !!(existing && existing.firstRunSeen),
     };
-    if (cfg.password) {
-      if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'safeStorage ej tillgängligt' };
-      out.passwordEnc = safeStorage.encryptString(cfg.password).toString('base64');
-    } else {
-      const existing = readEmailConfig();
-      if (existing && existing.passwordEnc) out.passwordEnc = existing.passwordEnc;
-    }
-    fs.writeFileSync(emailConfigPath(), JSON.stringify(out, null, 2), 'utf8');
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-});
-
-ipcMain.handle('send_email', async (_e, subject, body) => {
-  if (!nodemailer) return { ok: false, error: 'nodemailer ej installerat' };
-  const c = readEmailConfig();
-  if (!c || !c.enabled || !c.host || !c.port || !c.user || !c.password || !c.to) {
-    return { ok: false, error: 'ej konfigurerad' };
-  }
-  try {
-    const transporter = nodemailer.createTransport({
-      host: c.host,
-      port: c.port,
-      secure: c.port === 465,
-      auth: { user: c.user, pass: c.password },
-    });
-    await transporter.sendMail({ from: c.user, to: c.to, subject, text: body });
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-});
-
-ipcMain.handle('test_email', async (_e, cfg) => {
-  if (!nodemailer) return { ok: false, error: 'nodemailer ej installerat — kör "npm install"' };
-  let password = cfg && cfg.password;
-  if (!password) {
-    const existing = readEmailConfig();
-    if (existing) password = existing.password;
-  }
-  const host = (cfg && cfg.host || '').trim();
-  const port = Number(cfg && cfg.port) || 587;
-  const user = (cfg && cfg.user || '').trim();
-  const to = (cfg && cfg.to || user).trim();
-  if (!host || !port || !user || !password || !to) return { ok: false, error: 'Fyll i alla fält först' };
-  try {
-    const transporter = nodemailer.createTransport({
-      host, port, secure: port === 465,
-      auth: { user, pass: password },
-    });
-    await transporter.verify();
-    await transporter.sendMail({
-      from: user, to,
-      subject: 'Simpel — testmejl',
-      text: 'Detta är ett testmejl från Simpel. SMTP-anslutningen fungerar.',
-    });
+    fs.writeFileSync(notifConfigPath(), JSON.stringify(out, null, 2), 'utf8');
+    try { refreshTrayMenu(); } catch (_) {}
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -345,36 +307,43 @@ function createWindow() {
   });
 }
 
+function buildTrayMenu() {
+  const openAtLogin = app.getLoginItemSettings().openAtLogin;
+  const c = readNotifConfig();
+  const enabled = !c || c.enabled !== false;
+  return Menu.buildFromTemplate([
+    { label: `Aviseringar: ${enabled ? 'På' : 'Av'}`, enabled: false },
+    { type: 'separator' },
+    {
+      label: 'Öppna Simpel',
+      click: () => { mainWindow.show(); mainWindow.focus(); }
+    },
+    { type: 'separator' },
+    {
+      label: 'Starta med Windows',
+      type: 'checkbox',
+      checked: openAtLogin,
+      click: (item) => {
+        app.setLoginItemSettings({ openAtLogin: item.checked, openAsHidden: true });
+        refreshTrayMenu();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Avsluta',
+      click: () => { isQuitting = true; app.quit(); }
+    }
+  ]);
+}
+
+function refreshTrayMenu() {
+  if (tray) tray.setContextMenu(buildTrayMenu());
+}
+
 function createTray() {
   tray = new Tray(path.join(__dirname, 'build', 'icon.png'));
   tray.setToolTip('Simpel');
-
-  const buildMenu = () => {
-    const openAtLogin = app.getLoginItemSettings().openAtLogin;
-    return Menu.buildFromTemplate([
-      {
-        label: 'Öppna Simpel',
-        click: () => { mainWindow.show(); mainWindow.focus(); }
-      },
-      { type: 'separator' },
-      {
-        label: 'Starta med Windows',
-        type: 'checkbox',
-        checked: openAtLogin,
-        click: (item) => {
-          app.setLoginItemSettings({ openAtLogin: item.checked, openAsHidden: true });
-          tray.setContextMenu(buildMenu());
-        }
-      },
-      { type: 'separator' },
-      {
-        label: 'Avsluta',
-        click: () => { isQuitting = true; app.quit(); }
-      }
-    ]);
-  };
-
-  tray.setContextMenu(buildMenu());
+  tray.setContextMenu(buildTrayMenu());
   tray.on('double-click', () => { mainWindow.show(); mainWindow.focus(); });
 }
 

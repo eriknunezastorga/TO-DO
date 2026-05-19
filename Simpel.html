@@ -1570,7 +1570,7 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
           <input type="time" id="f-reminderTime" value="09:00" style="display:none">
           <input type="date" id="f-reminderDate" style="display:none">
         </div>
-        <small style="display:block;margin-top:6px;color:#666">E-postavisering konfigureras globalt via ⚙ i toppmenyn.</small>
+        <small style="display:block;margin-top:6px;color:#666">Påminnelsen visas som Windows-notis. Hantera aviseringar via ⚙ i toppmenyn.</small>
       </div>
       <div class="form-group">
         <label>Taggar (kommaseparerade)</label>
@@ -1592,51 +1592,77 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 <div class="modal-backdrop" id="settings-modal-backdrop" onclick="closeModalOnBackdrop(event,'settings-modal-backdrop')">
   <div class="modal modal-form" id="settings-modal">
     <div class="modal-header">
-      <h2>Inställningar — E-postavisering</h2>
+      <h2>Inställningar — Aviseringar</h2>
       <button class="modal-close" onclick="closeSettingsModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="set-email-enabled" style="width:auto"> Aktivera e-postaviseringar
+          <input type="checkbox" id="set-notif-enabled" style="width:auto"> Aktivera aviseringar
         </label>
-        <small style="display:block;margin-top:6px;color:#666">När detta är aktiverat skickas ett mejl till din adress varje gång en påminnelse triggas.</small>
+        <small style="display:block;margin-top:6px;color:#666">När detta är på får du en Windows-notis varje gång en påminnelse förfaller.</small>
       </div>
-      <div class="form-group">
-        <label>Förinställning</label>
-        <select id="set-email-preset" onchange="applyEmailPreset()">
-          <option value="">— Välj e-postleverantör —</option>
-          <option value="gmail">Gmail (smtp.gmail.com:587)</option>
-          <option value="outlook">Outlook / Hotmail (smtp-mail.outlook.com:587)</option>
-          <option value="icloud">iCloud (smtp.mail.me.com:587)</option>
-          <option value="custom">Anpassad</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Min e-postadress (avsändare = mottagare)</label>
-        <input type="email" id="set-email-user" placeholder="dittnamn@gmail.com">
-      </div>
-      <div class="form-group">
-        <label>App-lösenord</label>
-        <input type="password" id="set-email-password" placeholder="••••••••••••" autocomplete="new-password">
-        <small style="display:block;margin-top:6px;color:#666">Gmail/Outlook kräver ett "app-lösenord" (kontot måste ha 2FA aktiverat) — inte ditt vanliga inloggningslösenord. Lösenordet sparas krypterat lokalt på den här datorn.</small>
-      </div>
-      <div class="form-row" style="display:flex;gap:8px">
-        <div class="form-group" style="flex:1">
-          <label>SMTP-server</label>
-          <input type="text" id="set-email-host" placeholder="smtp.gmail.com">
+
+      <div style="background:#F9FAFB;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:4px">
+        <h3 style="margin:0 0 10px;font-size:14px;font-weight:700;color:var(--text)">Så fungerar Windows-notiser i Simpel</h3>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#DCFCE7;color:#16A34A;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">1</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>När triggas en notis?</strong><br>
+            När du skapar en uppgift med en påminnelse — t.ex. "1 dag innan deadline kl 09:00" — kontrollerar Simpel varje minut om tiden har inträffat. När den gör det visas en notis automatiskt.
+          </div>
         </div>
-        <div class="form-group" style="width:110px">
-          <label>Port</label>
-          <input type="number" id="set-email-port" value="587">
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#DBEAFE;color:#2563EB;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">2</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>Var visas notisen?</strong><br>
+            I nedre högra hörnet av skärmen, som en vanlig Windows-notis. Den ligger sedan kvar i <em>Action Center</em> (Win+N) tills du läst eller stängt den.
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#FEF3C7;color:#D97706;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">3</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>Klicka för att öppna uppgiften</strong><br>
+            Ett klick på notisen öppnar Simpel direkt och tar dig till rätt uppgift. Du behöver inte leta upp den manuellt.
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#F3E8FF;color:#7C3AED;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">4</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>Simpel måste köras</strong><br>
+            Notiser kan bara skickas medan Simpel kör. Du kan stänga huvudfönstret — appen lever vidare i <em>systemfältet</em> nere till höger. För att Simpel ska starta automatiskt vid inloggning: högerklicka på ikonen i systemfältet och välj <strong>"Starta med Windows"</strong>.
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">5</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>"Stör ej" / Focus Assist</strong><br>
+            Om Windows "Stör ej"-läge är på syns notisen inte direkt, men hamnar i Action Center. Lägg till Simpel som prioriterad app i Windows-inställningarna om du vill att notiser ska bryta igenom.
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#CFFAFE;color:#0891B2;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">6</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55">
+            <strong>Missade påminnelser</strong><br>
+            Om datorn var avstängd när påminnelsetiden inträffade, triggas notisen så snart Simpel startar igen — så länge deadlinen var inom de senaste 30 dagarna.
+          </div>
         </div>
       </div>
-      <div id="set-email-status" style="margin-top:8px;min-height:1.4em"></div>
+
+      <div id="set-notif-test-row" style="margin-top:14px;display:flex;align-items:center;gap:10px">
+        <button class="btn-secondary" type="button" onclick="bridge.call('notify', 'Testnotis från Simpel', 'Så här ser dina påminnelser ut. Klicka för att stänga.')">Skicka testnotis</button>
+        <small style="color:#666">Klicka för att se en exempelnotis direkt.</small>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="testEmailSettings()">Testa anslutning</button>
       <button class="btn-secondary" onclick="closeSettingsModal()">Avbryt</button>
-      <button class="btn-primary" onclick="saveEmailSettings()">Spara</button>
+      <button class="btn-primary" onclick="saveNotificationSettings()">Spara</button>
     </div>
   </div>
 </div>
@@ -1821,6 +1847,11 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         Simpel sparar all data lokalt på din dator &mdash; ingen molntjänst, ingen inloggning och inga konton.
       </div>
+      <div class="welcome-footer-note" style="background:#F0F9FF;border:1px solid #BAE6FD">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>Påminnelser visas som Windows-notiser i nedre högra hörnet. Aktivera "Starta med Windows" i systemfältet om du vill att Simpel ska köras i bakgrunden och kunna avisera även när huvudfönstret är stängt.</span>
+        <button class="welcome-path-copy" onclick="bridge.call('notify', 'Test', 'Så här ser dina påminnelser ut!')" title="Skicka en testnotis">Testa nu</button>
+      </div>
       <div class="welcome-path-row">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
         <span style="flex-shrink:0">Din datafil:</span>
@@ -1931,6 +1962,7 @@ const _electronApi = window.electronApi || null;
 const bridge = {
   call(method, ...args) {
     const api = _electronApi || _tauriApi || _localStorageApi;
+    if (!api || typeof api[method] !== 'function') return Promise.resolve(null);
     return Promise.resolve(api[method](...args));
   }
 };
@@ -2102,7 +2134,10 @@ function openTaskModal(prefill = {}) {
 
 function openEditTaskModal(id) {
   const t = state.tasks.find(t => t.id === id);
-  if (!t) return;
+  if (!t) {
+    showToast('Uppgiften hittades inte — kan vara raderad', 'info');
+    return;
+  }
   openTaskModal(t);
   document.getElementById('edit-task-id').value = id;
   document.getElementById('task-modal-title').textContent = 'Redigera uppgift';
@@ -3192,6 +3227,7 @@ function getReminderDateTime(task) {
 function checkReminders() {
   const now = Date.now();
   const today = new Date(); today.setHours(0,0,0,0);
+  const thirtyDaysAgo = today.getTime() - 30 * 24 * 60 * 60 * 1000;
   state.tasks.filter(t => !t.completed && t.reminder !== 'none').forEach(t => {
     if (t.reminderSentAt) return;
     const dt = getReminderDateTime(t);
@@ -3199,9 +3235,17 @@ function checkReminders() {
     if (now < dt.getTime()) return;
     if (t.deadline) {
       const dl = new Date(t.deadline + 'T00:00:00');
-      if (dl.getTime() < today.getTime()) {
+      if (dl.getTime() < thirtyDaysAgo) {
+        // Deadline > 30 dagar gammal — markera som skickad utan att trigga (undvik översvämning vid import av gammal data)
         t.reminderSentAt = new Date().toISOString();
         scheduleSave();
+        return;
+      }
+      if (dl.getTime() < today.getTime()) {
+        // Deadline passerad (men inom 30 dagar) — trigga en försenad påminnelse med neutral formulering
+        t.reminderSentAt = new Date().toISOString();
+        scheduleSave();
+        triggerNotification('Påminnelse (försenad): ' + t.title, `Deadline: ${formatDate(t.deadline)}`, t.id);
         return;
       }
     }
@@ -3211,11 +3255,24 @@ function checkReminders() {
   });
 }
 
-function triggerNotification(title, body, taskId) {
+async function triggerNotification(title, body, taskId) {
+  const ts = new Date().toISOString();
+  let cfg = null;
+  try { cfg = await bridge.call('get_email_config'); } catch (_) {}
+  const enabled = cfg ? cfg.enabled !== false : true;
+
+  bridge.call('log_notification', `${ts} FRONTEND trigger enabled=${enabled} taskId=${taskId || 'n/a'} title="${title}"`).catch(() => {});
+
   showToast(`⏰ ${title} — ${body}`, 'info');
-  bridge.call('notify', title, body, taskId).catch(() => {});
-  bridge.call('send_email', 'Påminnelse: ' + title, body).catch(() => {});
-  if ('Notification' in window) {
+
+  if (!enabled) return;
+
+  bridge.call('notify', title, body, taskId).catch(e => {
+    bridge.call('log_notification', `${ts} ERROR notify err=${e && e.message || e}`).catch(() => {});
+  });
+
+  // Web Notification API endast som fallback när Electron-bridge inte finns (rent browser-läge)
+  if (!window.electronApi && 'Notification' in window) {
     if (Notification.permission === 'granted') {
       new Notification('Simpel – ' + title, { body });
     } else if (Notification.permission !== 'denied') {
@@ -3229,19 +3286,13 @@ function triggerNotification(title, body, taskId) {
 setInterval(checkReminders, 60000);
 
 // =========================================================
-// SETTINGS — E-postavisering
+// SETTINGS — Aviseringar
 // =========================================================
 async function openSettingsModal() {
-  document.getElementById('set-email-status').textContent = '';
-  document.getElementById('set-email-password').value = '';
-  document.getElementById('set-email-preset').value = '';
   let c = null;
   try { c = await bridge.call('get_email_config'); } catch (_) { c = null; }
-  document.getElementById('set-email-enabled').checked = !!(c && c.enabled);
-  document.getElementById('set-email-user').value = (c && c.user) || '';
-  document.getElementById('set-email-host').value = (c && c.host) || '';
-  document.getElementById('set-email-port').value = (c && c.port) || 587;
-  document.getElementById('set-email-password').placeholder = (c && c.hasPassword) ? '(sparat — lämna tomt för att behålla)' : '••••••••••••';
+  const enabled = c ? c.enabled !== false : true;
+  document.getElementById('set-notif-enabled').checked = enabled;
   document.getElementById('settings-modal-backdrop').classList.add('open');
 }
 
@@ -3249,65 +3300,20 @@ function closeSettingsModal() {
   document.getElementById('settings-modal-backdrop').classList.remove('open');
 }
 
-function applyEmailPreset() {
-  const v = document.getElementById('set-email-preset').value;
-  const presets = {
-    gmail:   { host: 'smtp.gmail.com',         port: 587 },
-    outlook: { host: 'smtp-mail.outlook.com',  port: 587 },
-    icloud:  { host: 'smtp.mail.me.com',       port: 587 }
+async function saveNotificationSettings() {
+  const cfg = {
+    enabled: document.getElementById('set-notif-enabled').checked,
   };
-  if (presets[v]) {
-    document.getElementById('set-email-host').value = presets[v].host;
-    document.getElementById('set-email-port').value = presets[v].port;
-  }
-}
-
-function readEmailFormCfg() {
-  const user = document.getElementById('set-email-user').value.trim();
-  return {
-    enabled: document.getElementById('set-email-enabled').checked,
-    host: document.getElementById('set-email-host').value.trim(),
-    port: document.getElementById('set-email-port').value,
-    user,
-    to: user,
-    password: document.getElementById('set-email-password').value
-  };
-}
-
-async function saveEmailSettings() {
-  const cfg = readEmailFormCfg();
-  if (cfg.enabled && (!cfg.host || !cfg.user)) {
-    showToast('Fyll i adress och SMTP-server innan du aktiverar', 'error');
-    return;
-  }
   try {
     const r = await bridge.call('save_email_config', cfg);
     if (r && r.ok) {
-      showToast('E-postinställningar sparade', 'success');
+      showToast('Aviseringsinställningar sparade', 'success');
       closeSettingsModal();
     } else {
       showToast('Fel vid spar: ' + ((r && r.error) || 'okänt'), 'error');
     }
   } catch (e) {
     showToast('Fel: ' + e.message, 'error');
-  }
-}
-
-async function testEmailSettings() {
-  const status = document.getElementById('set-email-status');
-  status.textContent = 'Testar anslutning...'; status.style.color = '';
-  try {
-    const r = await bridge.call('test_email', readEmailFormCfg());
-    if (r && r.ok) {
-      status.textContent = '✅ Testmejl skickat — kolla din inkorg.';
-      status.style.color = '#16a34a';
-    } else {
-      status.textContent = '❌ ' + ((r && r.error) || 'Okänt fel');
-      status.style.color = '#dc2626';
-    }
-  } catch (e) {
-    status.textContent = '❌ ' + e.message;
-    status.style.color = '#dc2626';
   }
 }
 

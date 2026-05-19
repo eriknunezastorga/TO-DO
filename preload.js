@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronApi', {
   save:           (data)   => ipcRenderer.invoke('save', data),
   get_data_path:  ()       => ipcRenderer.invoke('get_data_path'),
   notify:         (t, m, id) => ipcRenderer.invoke('notify', t, m, id),
+  log_notification: (line) => ipcRenderer.invoke('log_notification', line),
   export_dialog:  (data)   => ipcRenderer.invoke('export_dialog', data),
   import_dialog:  ()       => ipcRenderer.invoke('import_dialog'),
   ensure_ollama:  ()       => ipcRenderer.invoke('ensure_ollama'),
@@ -17,6 +18,4 @@ contextBridge.exposeInMainWorld('electronApi', {
   update_download: (url)    => ipcRenderer.invoke('update:download', url),
   get_email_config: ()       => ipcRenderer.invoke('get_email_config'),
   save_email_config: (cfg)   => ipcRenderer.invoke('save_email_config', cfg),
-  send_email:       (s, b)   => ipcRenderer.invoke('send_email', s, b),
-  test_email:       (cfg)    => ipcRenderer.invoke('test_email', cfg),
 });
