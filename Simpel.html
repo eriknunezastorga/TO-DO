@@ -288,7 +288,13 @@ a { color: inherit; text-decoration: none; }
 #view-container.notes-active { overflow: hidden; padding: 0; }
 #notes-view {
   display: flex;
+  flex-direction: column;
   height: 100%;
+  overflow: hidden;
+}
+#notes-view-inner {
+  display: flex;
+  flex: 1;
   overflow: hidden;
 }
 /* LEFT PANEL */
@@ -382,6 +388,144 @@ a { color: inherit; text-decoration: none; }
   font-size: 14px; line-height: 1.7; color: var(--text);
   padding: 20px 24px; outline: none; width: 100%; overflow-y: auto;
 }
+/* -------- FLIKRAD -------- */
+.notes-tabs-bar {
+  display: flex; align-items: stretch;
+  height: 38px; flex-shrink: 0;
+  background: #FFFBEB; border-bottom: 1px solid #FDE68A;
+  overflow-x: auto; overflow-y: hidden; gap: 0;
+}
+.notes-tabs-bar::-webkit-scrollbar { height: 3px; }
+.notes-tabs-bar::-webkit-scrollbar-thumb { background: #FDE68A; border-radius: 2px; }
+.note-tab {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0 14px; cursor: pointer;
+  font-size: 12.5px; font-weight: 500; color: #92400E;
+  border-right: 1px solid #FDE68A; white-space: nowrap;
+  transition: background .12s; position: relative; flex-shrink: 0;
+}
+.note-tab:hover { background: #FEF9C3; }
+.note-tab.active {
+  background: var(--note-bg,#fff); color: #78350F; font-weight: 700;
+  border-bottom: 2px solid #CA8A04; margin-bottom: -1px;
+}
+.note-tab-label {
+  outline: none; background: transparent; border: none;
+  font: inherit; color: inherit; cursor: pointer; min-width: 30px; max-width: 110px;
+}
+.note-tab-label:focus { cursor: text; border-bottom: 1px dashed #CA8A04; }
+.note-tab-count {
+  font-size: 10px; opacity: .55; font-weight: 400;
+}
+.note-tab-close {
+  width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 10px; color: #92400E; background: none;
+  opacity: 0; transition: opacity .12s, background .12s; cursor: pointer;
+}
+.note-tab:hover .note-tab-close { opacity: 1; }
+.note-tab-close:hover { background: #FBBF24; opacity: 1; }
+.note-tab-add-btn {
+  padding: 0 14px; height: 38px; font-size: 16px; color: #92400E;
+  background: none; cursor: pointer; flex-shrink: 0; opacity: .55;
+  transition: opacity .12s; display: flex; align-items: center;
+}
+.note-tab-add-btn:hover { opacity: 1; }
+/* -------- FORMAT-VERKTYGSFÄLT -------- */
+.notes-fmt-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 12px; border-bottom: 1px solid #FDE68A;
+  background: #FFFBEB; flex-shrink: 0; flex-wrap: wrap; gap: 6px;
+}
+.fmt-toolbar-left, .fmt-toolbar-right {
+  display: flex; align-items: center; gap: 3px; flex-wrap: wrap;
+}
+.fmt-btn {
+  min-width: 26px; height: 26px; padding: 0 5px;
+  border-radius: 5px; font-size: 12.5px; font-weight: 700;
+  color: #92400E; background: transparent; cursor: pointer;
+  border: 1px solid transparent; transition: all .12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.fmt-btn:hover { background: #FEF3C7; border-color: #FDE68A; }
+.fmt-btn.active { background: #FDE68A; border-color: #FCD34D; color: #78350F; }
+.fmt-sep {
+  width: 1px; height: 16px; background: #FDE68A; margin: 0 3px; flex-shrink: 0;
+}
+.fmt-btn-share {
+  font-size: 11px; font-weight: 600; padding: 0 9px;
+  color: var(--accent); border: 1px solid var(--accent);
+  border-radius: 5px; height: 26px;
+}
+.fmt-btn-share:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* -------- TAGG-RAD -------- */
+.notes-tag-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  padding: 5px 14px; border-bottom: 1px solid #FEF3C7;
+  background: #FFFBEB; flex-shrink: 0; min-height: 32px;
+}
+.notes-tag-bar:empty { display: none; }
+.note-tag-badge {
+  font-size: 10.5px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; letter-spacing: .04em; text-transform: uppercase;
+  cursor: pointer; transition: opacity .12s;
+}
+.note-tag-badge:hover { opacity: .7; }
+.note-tag-add-btn {
+  font-size: 11px; color: #92400E; background: #FEF9C3;
+  border: 1px dashed #FDE68A; border-radius: 4px; padding: 2px 7px;
+  cursor: pointer; transition: all .12s;
+}
+.note-tag-add-btn:hover { background: #FDE68A; }
+.note-list-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; }
+/* -------- CONTENTEDITABLE EDITOR -------- */
+.notes-editor-body {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px; outline: none;
+  font-size: 14px; line-height: 1.75; color: var(--text);
+  background: var(--note-bg,#fff);
+  word-break: break-word;
+}
+.notes-editor-body:empty::before {
+  content: attr(data-placeholder);
+  color: #B5A278; pointer-events: none; display: block;
+}
+.notes-editor-body h1 {
+  font-size: 1.45rem; font-weight: 700; margin: 0 0 12px;
+  color: #78350F; border-bottom: 1px solid #FDE68A; padding-bottom: 6px;
+}
+.notes-editor-body h2 {
+  font-size: 1.15rem; font-weight: 700; margin: 14px 0 8px;
+  color: var(--accent);
+}
+.notes-editor-body strong { font-weight: 700; }
+.notes-editor-body em { font-style: italic; }
+.notes-editor-body ul { padding-left: 20px; margin: 6px 0; }
+.notes-editor-body ol { padding-left: 20px; margin: 6px 0; }
+.notes-editor-body li { margin-bottom: 3px; }
+.notes-editor-body a {
+  color: var(--accent); text-decoration: underline;
+  text-underline-offset: 2px; cursor: pointer;
+}
+.notes-editor-body a:hover { opacity: .8; }
+.notes-editor-body img {
+  max-width: 100%; border-radius: 6px;
+  margin: 8px 0; display: block;
+}
+.note-img-wrap { display: block; margin: 10px 0; }
+.note-img-caption {
+  display: block; font-size: 11.5px; color: var(--text-muted);
+  font-style: italic; margin-top: 4px; text-align: center;
+}
+/* -------- STATUSFÄLT -------- */
+.notes-status-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 16px; border-top: 1px solid #FDE68A;
+  background: #FFFBEB; flex-shrink: 0;
+  font-size: 10.5px; font-weight: 600; color: #92400E;
+  letter-spacing: .04em;
+}
+.notes-status-sep { opacity: .35; }
+#notes-status-sync { display: flex; align-items: center; gap: 3px; }
 .btn-to-task {
   font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
   border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
@@ -593,6 +737,40 @@ a { color: inherit; text-decoration: none; }
 .modal-close:hover { background: var(--border); }
 .modal-body { padding: 22px 28px 14px; }
 .modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+/* WELCOME MODAL */
+.welcome-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+.welcome-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.welcome-card-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--sb-active-bg); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.welcome-card-icon svg { width: 15px; height: 15px; color: #fff; }
+.welcome-card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.welcome-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.welcome-footer-note {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+}
+.welcome-footer-note svg { flex-shrink: 0; color: var(--accent); }
+.topbar-help-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; font-size: 13px; font-weight: 700;
+  color: var(--text-muted); display: flex;
+  align-items: center; justify-content: center;
+  transition: background .15s; flex-shrink: 0;
+}
+.topbar-help-btn:hover { background: var(--border); color: var(--text); }
 
 /* NOTE STRUCTURE MODAL — markdown output */
 .note-structure-output {
@@ -911,6 +1089,7 @@ a { color: inherit; text-decoration: none; }
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
         <input type="text" id="search-input" placeholder="Sök uppgifter..." oninput="onSearch(this.value)">
       </div>
+      <button class="topbar-help-btn" onclick="showWelcomeModal()" title="Om Simpel">?</button>
     </div>
 
     <!-- VIEW CONTAINER -->
@@ -946,55 +1125,86 @@ a { color: inherit; text-decoration: none; }
 
       <!-- NOTES VIEW -->
       <div id="notes-view" style="display:none">
-        <!-- LEFT PANEL: note list -->
-        <div class="notes-sidebar">
-          <div class="notes-sidebar-header">
-            <div class="notes-search-wrap">
-              <svg viewBox="0 0 16 16" fill="currentColor" class="notes-search-icon">
-                <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/>
-              </svg>
-              <input type="text" id="notes-search" placeholder="Sök anteckningar..." oninput="filterNotes(this.value)">
-            </div>
-            <button class="notes-new-btn" onclick="addNote()" title="Ny anteckning">
-              <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-          </div>
-          <div class="notes-list" id="notes-list"></div>
+        <!-- FLIKRAD -->
+        <div class="notes-tabs-bar" id="notes-tabs-bar">
+          <button class="note-tab-add-btn" onclick="addNoteTab()" title="Ny vy">+</button>
         </div>
-        <!-- RIGHT PANEL: editor -->
-        <div class="notes-editor-panel">
-          <div class="notes-editor-empty" id="notes-editor-empty">
-            <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
-              <rect x="8" y="6" width="32" height="36" rx="4" stroke="#D1D5DB" stroke-width="2"/>
-              <path d="M16 16h16M16 22h16M16 28h10" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <p>Välj en anteckning</p>
-            <span>eller klicka + för att skapa en ny</span>
-          </div>
-          <div class="notes-editor-content" id="notes-editor-content" style="display:none">
-            <div class="notes-editor-toolbar">
-              <div class="notes-editor-meta">
-                <span class="notes-editor-date" id="notes-editor-date"></span>
-                <span class="notes-editor-wordcount" id="notes-editor-wordcount"></span>
+        <div id="notes-view-inner">
+          <!-- LEFT PANEL: note list -->
+          <div class="notes-sidebar">
+            <div class="notes-sidebar-header">
+              <div class="notes-search-wrap">
+                <svg viewBox="0 0 16 16" fill="currentColor" class="notes-search-icon">
+                  <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/>
+                </svg>
+                <input type="text" id="notes-search" placeholder="Sök anteckningar..." oninput="filterNotes(this.value)">
               </div>
-              <div class="notes-editor-actions">
-                <button class="btn-copy-note" onclick="copyNoteContent()" title="Kopiera anteckning">⎘ Kopiera</button>
-                <div class="note-template-picker">
-                  <button class="note-template-picker-btn" id="editor-tpl-btn" onclick="toggleEditorTemplatePicker(this)">✦ AI-mall <span style="font-size:9px;opacity:.8">▾</span></button>
-                  <div class="template-dropdown" id="editor-tpl-drop"></div>
+              <button class="notes-new-btn" onclick="addNote()" title="Ny anteckning">
+                <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <div class="notes-list" id="notes-list"></div>
+          </div>
+          <!-- RIGHT PANEL: editor -->
+          <div class="notes-editor-panel">
+            <div class="notes-editor-empty" id="notes-editor-empty">
+              <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+                <rect x="8" y="6" width="32" height="36" rx="4" stroke="#D1D5DB" stroke-width="2"/>
+                <path d="M16 16h16M16 22h16M16 28h10" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p>Välj en anteckning</p>
+              <span>eller klicka + för att skapa en ny</span>
+            </div>
+            <div class="notes-editor-content" id="notes-editor-content" style="display:none">
+              <!-- FORMAT-VERKTYGSFÄLT -->
+              <div class="notes-fmt-toolbar">
+                <div class="fmt-toolbar-left">
+                  <button class="fmt-btn" id="fmt-btn-h1"     onclick="fmtCmd('h1')"     title="Rubrik H1">H1</button>
+                  <button class="fmt-btn" id="fmt-btn-bold"   onclick="fmtCmd('bold')"   title="Fet (Ctrl+B)"><b>B</b></button>
+                  <button class="fmt-btn" id="fmt-btn-italic" onclick="fmtCmd('italic')" title="Kursiv (Ctrl+I)"><i>I</i></button>
+                  <div class="fmt-sep"></div>
+                  <button class="fmt-btn" id="fmt-btn-ul"     onclick="fmtCmd('ul')"     title="Punktlista">&#x2630;</button>
+                  <div class="fmt-sep"></div>
+                  <button class="fmt-btn" id="fmt-btn-link"   onclick="fmtInsertLink()"  title="Infoga länk">&#x1F517;</button>
+                  <button class="fmt-btn" id="fmt-btn-img"    onclick="fmtInsertImage()" title="Infoga bild">&#x1F5BC;</button>
+                  <div class="fmt-sep"></div>
+                  <button class="btn-copy-note" onclick="copyNoteContent()" title="Kopiera anteckning">&#x2398; Kopiera</button>
+                  <div class="note-template-picker">
+                    <button class="note-template-picker-btn" id="editor-tpl-btn" onclick="toggleEditorTemplatePicker(this)">&#x2736; AI-mall <span style="font-size:9px;opacity:.8">&#x25BE;</span></button>
+                    <div class="template-dropdown" id="editor-tpl-drop"></div>
+                  </div>
+                  <button class="btn-to-task" onclick="noteToTask(activeNoteId)">Gör till uppgift</button>
                 </div>
-                <button class="btn-to-task" onclick="noteToTask(activeNoteId)">Gör till uppgift</button>
-                <button class="btn-del-note" onclick="deleteNote(activeNoteId)">Ta bort</button>
+                <div class="fmt-toolbar-right">
+                  <button class="fmt-btn fmt-btn-share" onclick="shareNote()" title="Dela anteckning">&#x2197; Dela</button>
+                  <button class="btn-del-note" onclick="deleteNote(activeNoteId)">Ta bort</button>
+                </div>
+              </div>
+              <!-- TAGG-RAD -->
+              <div class="notes-tag-bar" id="notes-tag-bar"></div>
+              <!-- CONTENTEDITABLE EDITOR -->
+              <div class="notes-editor-body" id="notes-editor-body"
+                contenteditable="true"
+                spellcheck="true"
+                data-placeholder="Skriv din anteckning..."
+                oninput="onEditorInput()"
+                onmouseup="checkNoteSelection(event)"
+                onkeydown="onEditorKeyDown(event)"
+                onblur="saveActiveNote()"></div>
+              <!-- STATUSFÄLT -->
+              <div class="notes-status-bar">
+                <span id="notes-status-saved">SENAST SPARAD --:--</span>
+                <span class="notes-status-sep">|</span>
+                <span id="notes-status-words">0 ORD</span>
+                <span class="notes-status-sep">|</span>
+                <span id="notes-status-sync">&#x25CF; SYNKRONISERAD</span>
               </div>
             </div>
-            <textarea class="notes-editor-textarea" id="notes-editor-textarea"
-              placeholder="Skriv din anteckning..."
-              onblur="saveActiveNote()"
-              oninput="onEditorInput()"
-              onmouseup="checkNoteSelection(event)"></textarea>
           </div>
         </div>
       </div>
+      <!-- Dold fil-input för bildinsättning -->
+      <input type="file" id="note-img-input" accept="image/*" style="display:none" onchange="onImageFileSelected(event)">
 
       <!-- KANBAN VIEW -->
       <div id="kanban-view" style="display:none">
@@ -1187,6 +1397,87 @@ a { color: inherit; text-decoration: none; }
   </div>
 </div>
 
+<!-- WELCOME MODAL -->
+<div class="modal-backdrop" id="welcome-backdrop">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="assets/icon.png" style="width:36px;height:36px;border-radius:8px;flex-shrink:0" alt="Simpel">
+        <div>
+          <h2>Välkommen till Simpel</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:3px">Din lokala uppgiftshanterare &mdash; enkel, snabb och helt offline.</p>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeWelcomeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="welcome-grid">
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 5a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V8zm0 5a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Uppgifter</div>
+            <div class="welcome-card-desc">Skapa uppgifter med prioritet (hög / medel / låg), deadline och projekttag. Tryck Ctrl+Space för att skriva med AI-hjälp.</div>
+          </div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 0a.5.5 0 01.5.5V1h5V.5a.5.5 0 011 0V1h1a2 2 0 012 2v11a2 2 0 01-2 2H2a2 2 0 01-2-2V3a2 2 0 012-2h1V.5A.5.5 0 015 0zM1 4v10a1 1 0 001 1h12a1 1 0 001-1V4H1z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Kalender</div>
+            <div class="welcome-card-desc">Se alla uppgifter dag för dag. Klicka på ett datum för att filtrera och få en överblick av vad som gäller just den dagen.</div>
+          </div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 1A1.5 1.5 0 001 2.5v11A1.5 1.5 0 002.5 15h11a1.5 1.5 0 001.5-1.5V5.5L10.5 1H2.5zM10 2v3.5H13L10 2zM4 7h8v1H4V7zm0 3h8v1H4v-1zm0 3h5v1H4v-1z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Anteckningar</div>
+            <div class="welcome-card-desc">Fri text med inbyggd AI-skrivhjälp. Markera valfri text för att få förslag på förbättringar, förkortningar eller expansioner.</div>
+          </div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h3v12H2V2zm4.5 0h3v7h-3V2zm4.5 0h3v5h-3V2z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Kanban</div>
+            <div class="welcome-card-desc">Tre kolumner: Att göra / Pågår / Klart. Dra och släpp uppgifter mellan kolumnerna för att följa arbetsflödet.</div>
+          </div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.354 4.354a.5.5 0 00-.708-.708L5 10.293 2.354 7.646a.5.5 0 00-.708.708l3 3a.5.5 0 00.708 0l7-7z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Avklarade</div>
+            <div class="welcome-card-desc">Alla slutförda uppgifter samlade på ett ställe. Filtrera per projekt för att se vad du åstadkommit över tid.</div>
+          </div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.5 1a.5.5 0 01.457.295l1.5 3.25.05.118.125.02 3.5.508a.5.5 0 01.277.852l-2.53 2.466-.09.088.02.124.597 3.478a.5.5 0 01-.725.527L7.5 10.863l-3.181 1.673a.5.5 0 01-.725-.527l.597-3.478.02-.124-.09-.088L1.591 5.853a.5.5 0 01.277-.852l3.5-.508.125-.02.05-.118 1.5-3.25A.5.5 0 017.5 1z"/></svg>
+          </div>
+          <div>
+            <div class="welcome-card-title">Promptmallar</div>
+            <div class="welcome-card-desc">Spara egna AI-mallar för t.ex. veckoplanering eller e-post. Öppna dem via sidebaren eller med Ctrl+Space.</div>
+          </div>
+        </div>
+      </div>
+      <div class="welcome-footer-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Simpel sparar all data lokalt på din dator &mdash; ingen molntjänst, ingen inloggning och inga konton.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeWelcomeModal()">Kom igång &rarr;</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI FLOAT TOOLBAR (for notes) -->
 <div class="ai-float-toolbar" id="ai-float-toolbar">
   <button class="ai-float-btn" onclick="aiWriteAssist('improve')">Forbattra</button>
@@ -1218,6 +1509,8 @@ let activeNoteForAI = null;
 let activeNoteTextarea = null;
 let activeNoteId = null;
 let noteSearchQuery = '';
+let noteTabsState = { tabs: [{ id: 'all', label: 'Alla', filter: null }], activeTabId: 'all' };
+let _savedImgRange = null;
 
 const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
 
@@ -1289,6 +1582,9 @@ async function loadData() {
     state.tasks = data.tasks || [];
     state.projects = data.projects || [];
     state.notes = data.notes || [];
+    state.noteTabs = data.noteTabs || [{ id: 'all', label: 'Alla', filter: null }];
+    noteTabsState.tabs = state.noteTabs;
+    noteTabsState.activeTabId = state.noteTabs[0]?.id || 'all';
   } catch(e) {
     console.error('Load failed', e);
   }
@@ -1449,6 +1745,17 @@ function closeTaskModal() {
   document.getElementById('task-modal-backdrop').classList.remove('open');
 }
 
+// =========================================================
+// WELCOME MODAL
+// =========================================================
+function showWelcomeModal() {
+  document.getElementById('welcome-backdrop').classList.add('open');
+}
+function closeWelcomeModal() {
+  localStorage.setItem('simpel_welcomed', '1');
+  document.getElementById('welcome-backdrop').classList.remove('open');
+}
+
 function saveTask() {
   const id = document.getElementById('edit-task-id').value;
   const fields = {
@@ -1521,6 +1828,7 @@ function onSearch(q) {
 }
 
 function filterByProject(id) {
+  if (currentView !== 'tasks') switchView('tasks');
   filterProject = id;
   document.querySelectorAll('.sb-project-item').forEach(el => el.classList.remove('active'));
   if (!id) {
@@ -1735,7 +2043,35 @@ function calDayClick(dateStr) {
 // =========================================================
 // RENDER: NOTES
 // =========================================================
-function getNoteTitle(text) {
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || d.innerText || '';
+}
+function noteTextToHtml(text) {
+  if (!text || !text.trim()) return '';
+  return text.trim().split('\n').map(line =>
+    line.trim() ? '<p>' + escHtml(line) + '</p>' : '<p><br></p>'
+  ).join('');
+}
+const TAG_COLORS = [
+  { bg: '#FEF9C3', color: '#92400E' },
+  { bg: '#DCFCE7', color: '#166534' },
+  { bg: '#FEE2E2', color: '#991B1B' },
+  { bg: '#EDE9FE', color: '#5B21B6' },
+  { bg: '#DBEAFE', color: '#1E40AF' },
+  { bg: '#FFF7ED', color: '#9A3412' },
+];
+function tagColor(tag) {
+  const idx = [...String(tag)].reduce((a, c) => a + c.charCodeAt(0), 0) % TAG_COLORS.length;
+  const c = TAG_COLORS[idx];
+  return `background:${c.bg};color:${c.color}`;
+}
+function getNoteTitle(text, html) {
+  if (html) {
+    const t = stripHtml(html).trim().split('\n')[0].trim().slice(0, 80);
+    if (t) return t;
+  }
   if (!text || !text.trim()) return '(Tom anteckning)';
   return text.trim().split('\n')[0].trim().slice(0, 80) || '(Tom anteckning)';
 }
@@ -1767,7 +2103,15 @@ function renderNotes() {
   const listEl = document.getElementById('notes-list');
   if (!listEl) return;
   const query = noteSearchQuery.toLowerCase();
-  const filtered = state.notes.filter(n => !query || n.text.toLowerCase().includes(query));
+  const activeTab = noteTabsState.tabs.find(t => t.id === noteTabsState.activeTabId);
+  const tabFilter = activeTab && activeTab.filter ? activeTab.filter : null;
+  const filtered = state.notes.filter(n => {
+    const plain = (n.text || '').toLowerCase();
+    const rich  = n.html ? stripHtml(n.html).toLowerCase() : '';
+    const matchSearch = !query || plain.includes(query) || rich.includes(query);
+    const matchTab = !tabFilter || (n.tags || []).includes(tabFilter);
+    return matchSearch && matchTab;
+  });
   if (!filtered.length) {
     listEl.innerHTML = `<div class="notes-list-empty">
       <p>${state.notes.length ? 'Inga träffar' : 'Inga anteckningar'}</p>
@@ -1775,12 +2119,17 @@ function renderNotes() {
     </div>`;
   } else {
     listEl.innerHTML = filtered.map(n => {
-      const title   = escHtml(getNoteTitle(n.text));
+      const title   = escHtml(getNoteTitle(n.text, n.html));
       const preview = escHtml(getNotePreview(n.text));
       const date    = getRelativeDate(n.updatedAt || n.createdAt);
-      const words   = n.text.trim().split(/\s+/).filter(Boolean).length;
+      const words   = (n.text || '').trim().split(/\s+/).filter(Boolean).length;
+      const tagsHtml = (n.tags || []).length
+        ? `<div class="note-list-tags">${(n.tags).map(tag =>
+            `<span class="note-tag-badge" style="${tagColor(tag)}">${escHtml(tag)}</span>`
+          ).join('')}</div>` : '';
       return `<div class="note-list-item${n.id === activeNoteId ? ' active' : ''}" onclick="selectNote('${n.id}')" id="nli-${n.id}">
         <div class="note-list-title">${title}</div>
+        ${tagsHtml}
         ${preview ? `<div class="note-list-preview">${preview}</div>` : ''}
         <div class="note-list-footer">
           <span class="note-list-date">${date}</span>
@@ -1789,6 +2138,7 @@ function renderNotes() {
       </div>`;
     }).join('');
   }
+  renderNoteTabs();
   if (activeNoteId) {
     const note = state.notes.find(n => n.id === activeNoteId);
     if (note) showNoteEditor(note);
@@ -1807,22 +2157,24 @@ function showNoteEditor(note) {
   document.getElementById('notes-editor-empty').style.display = 'none';
   const content = document.getElementById('notes-editor-content');
   content.style.display = 'flex';
-  const ta = document.getElementById('notes-editor-textarea');
-  if (document.activeElement !== ta) ta.value = note.text;
-  document.getElementById('notes-editor-date').textContent = 'Uppdaterad ' + getRelativeDate(note.updatedAt || note.createdAt);
-  document.getElementById('notes-editor-wordcount').textContent = getNoteWordCount(note.text);
+  const ed = document.getElementById('notes-editor-body');
+  if (document.activeElement !== ed) {
+    ed.innerHTML = note.html || noteTextToHtml(note.text);
+  }
+  renderNoteTagBar(note);
+  updateNoteStatusBar(note);
 }
 
 function selectNote(id) {
   if (activeNoteId) saveActiveNote();
   activeNoteId = id;
   activeNoteForAI = id;
-  const ta = document.getElementById('notes-editor-textarea');
-  activeNoteTextarea = ta;
+  const ed = document.getElementById('notes-editor-body');
+  activeNoteTextarea = ed;
   document.querySelectorAll('.note-list-item').forEach(el => el.classList.toggle('active', el.id === 'nli-' + id));
   const note = state.notes.find(n => n.id === id);
   if (note) showNoteEditor(note);
-  setTimeout(() => ta && ta.focus(), 50);
+  setTimeout(() => ed && ed.focus(), 50);
 }
 
 function filterNotes(query) {
@@ -1831,7 +2183,11 @@ function filterNotes(query) {
 }
 
 function addNote() {
-  const note = { id: Date.now().toString(), text: '', createdAt: new Date().toISOString() };
+  const note = { id: Date.now().toString(), text: '', html: '', tags: [], createdAt: new Date().toISOString() };
+  if (noteTabsState.activeTabId !== 'all') {
+    const tab = noteTabsState.tabs.find(t => t.id === noteTabsState.activeTabId);
+    if (tab && tab.filter) note.tags = [tab.filter];
+  }
   state.notes.unshift(note);
   scheduleSave();
   activeNoteId = note.id;
@@ -1841,30 +2197,44 @@ function addNote() {
   if (searchEl) searchEl.value = '';
   renderNotes();
   setTimeout(() => {
-    const ta = document.getElementById('notes-editor-textarea');
-    if (ta) ta.focus();
+    const ed = document.getElementById('notes-editor-body');
+    if (ed) ed.focus();
   }, 50);
 }
 
-function saveNote(id, text) {
+function saveNote(id, text, html) {
   const n = state.notes.find(n => n.id === id);
   if (!n) return;
   n.text = text;
+  if (html !== undefined) n.html = html;
   n.updatedAt = new Date().toISOString();
   scheduleSave();
   updateNoteListItem(id);
-  if (id === activeNoteId) {
-    const dateEl = document.getElementById('notes-editor-date');
-    if (dateEl) dateEl.textContent = 'Uppdaterad ' + getRelativeDate(n.updatedAt);
-    const wcEl = document.getElementById('notes-editor-wordcount');
-    if (wcEl) wcEl.textContent = getNoteWordCount(n.text);
-  }
+  if (id === activeNoteId) updateNoteStatusBar(n);
 }
 
 function saveActiveNote() {
   if (!activeNoteId) return;
-  const ta = document.getElementById('notes-editor-textarea');
-  if (ta) saveNote(activeNoteId, ta.value);
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  const html = ed.innerHTML;
+  const text = (ed.innerText || ed.textContent || '').trim();
+  saveNote(activeNoteId, text, html);
+}
+
+function updateNoteStatusBar(note) {
+  const savedEl = document.getElementById('notes-status-saved');
+  const wordsEl = document.getElementById('notes-status-words');
+  if (savedEl) {
+    const ts = note ? (note.updatedAt || note.createdAt) : null;
+    const time = ts ? new Date(ts).toLocaleTimeString('sv-SE', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+    savedEl.textContent = 'SENAST SPARAD ' + time;
+  }
+  if (wordsEl) {
+    const ed = document.getElementById('notes-editor-body');
+    const words = ed ? (ed.innerText || '').trim().split(/\s+/).filter(Boolean).length : 0;
+    wordsEl.textContent = words + ' ORD';
+  }
 }
 
 function updateNoteListItem(id) {
@@ -1872,11 +2242,16 @@ function updateNoteListItem(id) {
   if (!note) return;
   const el = document.getElementById('nli-' + id);
   if (!el) return;
-  const title   = escHtml(getNoteTitle(note.text));
+  const title   = escHtml(getNoteTitle(note.text, note.html));
   const preview = escHtml(getNotePreview(note.text));
   const date    = getRelativeDate(note.updatedAt || note.createdAt);
-  const words   = note.text.trim().split(/\s+/).filter(Boolean).length;
+  const words   = (note.text || '').trim().split(/\s+/).filter(Boolean).length;
+  const tagsHtml = (note.tags || []).length
+    ? `<div class="note-list-tags">${(note.tags).map(tag =>
+        `<span class="note-tag-badge" style="${tagColor(tag)}">${escHtml(tag)}</span>`
+      ).join('')}</div>` : '';
   el.innerHTML = `<div class="note-list-title">${title}</div>
+    ${tagsHtml}
     ${preview ? `<div class="note-list-preview">${preview}</div>` : ''}
     <div class="note-list-footer">
       <span class="note-list-date">${date}</span>
@@ -1886,10 +2261,11 @@ function updateNoteListItem(id) {
 
 function onEditorInput() {
   if (!activeNoteId) return;
-  const ta = document.getElementById('notes-editor-textarea');
-  if (!ta) return;
-  const wcEl = document.getElementById('notes-editor-wordcount');
-  if (wcEl) wcEl.textContent = getNoteWordCount(ta.value);
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  const words = (ed.innerText || '').trim().split(/\s+/).filter(Boolean).length;
+  const wcEl = document.getElementById('notes-status-words');
+  if (wcEl) wcEl.textContent = words + ' ORD';
   saveActiveNote();
 }
 
@@ -1904,7 +2280,12 @@ function deleteNote(id) {
 function noteToTask(id) {
   const n = state.notes.find(n => n.id === id);
   if (!n) return;
-  openTaskModal({ title: n.text.split('\n')[0].slice(0,80), notes: n.text });
+  let titleText = n.text || '';
+  if (id === activeNoteId) {
+    const ed = document.getElementById('notes-editor-body');
+    if (ed) titleText = ed.innerText || n.text;
+  }
+  openTaskModal({ title: titleText.split('\n')[0].slice(0,80), notes: titleText });
 }
 
 function setActiveNote(id, ta) {
@@ -2314,9 +2695,9 @@ function copyAiSummary() {
 }
 
 function copyNoteContent() {
-  const ta = document.getElementById('notes-editor-textarea');
-  if (!ta || !ta.value.trim()) { showToast('Anteckningen är tom', 'error'); return; }
-  navigator.clipboard.writeText(ta.value).then(() => showToast('Kopierat!', 'success'));
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed || !(ed.innerText || '').trim()) { showToast('Anteckningen är tom', 'error'); return; }
+  navigator.clipboard.writeText(ed.innerText).then(() => showToast('Kopierat!', 'success'));
 }
 
 function shareAiSummary() {
@@ -2327,7 +2708,7 @@ function shareAiSummary() {
 
 // AI Function 4: Writing assist for notes
 async function aiWriteAssist(mode) {
-  if (!aiEnabled || !activeNoteTextarea) return;
+  if (!aiEnabled) return;
   document.getElementById('ai-float-toolbar').classList.remove('visible');
   const sel = window.getSelection();
   const selectedText = sel ? sel.toString().trim() : '';
@@ -2338,14 +2719,16 @@ async function aiWriteAssist(mode) {
     expand: `Expandera följande text på svenska med mer detaljer. Svara ENDAST med den expanderade texten:\n"${selectedText}"`,
     bullets: `Gör om följande text till en punktlista på svenska. Svara ENDAST med punktlistan:\n"${selectedText}"`
   };
-  const originalText = activeNoteTextarea.value;
-  activeNoteTextarea.value = activeNoteTextarea.value.replace(selectedText, '(AI bearbetar...)');
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand('insertText', false, '(AI bearbetar...)');
   try {
     const result = await ollamaGenerate(prompts[mode], null);
-    activeNoteTextarea.value = originalText.replace(selectedText, stripMarkdown(result.trim()));
-    if (activeNoteForAI) saveNote(activeNoteForAI, activeNoteTextarea.value);
+    document.execCommand('insertText', false, stripMarkdown(result.trim()));
+    saveActiveNote();
   } catch(e) {
-    activeNoteTextarea.value = originalText;
+    document.execCommand('insertText', false, selectedText);
     showToast('AI-fel: ' + e.message, 'error');
   }
 }
@@ -2543,7 +2926,14 @@ function renderMarkdown(md) {
 async function structureNote(id, templatePrompt, templateName) {
   if (!aiEnabled) { showToast('Ollama är inte tillgänglig', 'error'); return; }
   const note = state.notes.find(n => n.id === id);
-  if (!note || !(note.text || '').trim()) { showToast('Anteckningen är tom', 'error'); return; }
+  if (!note) { showToast('Anteckning hittades inte', 'error'); return; }
+  if (note.html && !note.text && note.id === activeNoteId) {
+    const ed = document.getElementById('notes-editor-body');
+    if (ed) note.text = ed.innerText || '';
+  } else if (note.html && !note.text) {
+    note.text = stripHtml(note.html);
+  }
+  if (!(note.text || '').trim()) { showToast('Anteckningen är tom', 'error'); return; }
   structuringNoteId = id;
   structuredNoteResult = '';
   const out = document.getElementById('note-structure-output');
@@ -2595,23 +2985,243 @@ function closeNoteStructureModal() {
   structuredNoteResult = '';
 }
 
-function stripMarkdown(text) {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/^#{1,3}\s+/gm, '');
-}
-
 function acceptStructuredNote() {
   if (!structuringNoteId || !structuredNoteResult) return;
   const note = state.notes.find(n => n.id === structuringNoteId);
   if (note) {
+    note.html = renderMarkdown(structuredNoteResult.trim());
     note.text = stripMarkdown(structuredNoteResult.trim());
     note.updatedAt = new Date().toISOString();
     scheduleSave();
+    if (activeNoteId === structuringNoteId) {
+      const ed = document.getElementById('notes-editor-body');
+      if (ed) ed.innerHTML = note.html;
+    }
     renderNotes();
   }
   closeNoteStructureModal();
+}
+
+// =========================================================
+// RICH TEXT EDITOR — FORMAT-KOMMANDON
+// =========================================================
+function fmtCmd(cmd) {
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  ed.focus();
+  if (cmd === 'h1') {
+    const sel = window.getSelection();
+    const block = sel && sel.focusNode
+      ? (sel.focusNode.nodeType === 3 ? sel.focusNode.parentElement : sel.focusNode).closest('h1,h2,h3,p,div')
+      : null;
+    const isH1 = block && block.tagName === 'H1';
+    document.execCommand('formatBlock', false, isH1 ? '<p>' : '<h1>');
+  } else if (cmd === 'bold') {
+    document.execCommand('bold', false, null);
+  } else if (cmd === 'italic') {
+    document.execCommand('italic', false, null);
+  } else if (cmd === 'ul') {
+    document.execCommand('insertUnorderedList', false, null);
+  }
+  updateFmtToolbarState();
+  saveActiveNote();
+}
+
+function updateFmtToolbarState() {
+  try {
+    const isBold   = document.queryCommandState('bold');
+    const isItalic = document.queryCommandState('italic');
+    const isList   = document.queryCommandState('insertUnorderedList');
+    document.getElementById('fmt-btn-bold')?.classList.toggle('active', isBold);
+    document.getElementById('fmt-btn-italic')?.classList.toggle('active', isItalic);
+    document.getElementById('fmt-btn-ul')?.classList.toggle('active', isList);
+    const sel = window.getSelection();
+    const block = sel && sel.focusNode
+      ? (sel.focusNode.nodeType === 3 ? sel.focusNode.parentElement : sel.focusNode).closest('h1,h2,p,div')
+      : null;
+    document.getElementById('fmt-btn-h1')?.classList.toggle('active', block?.tagName === 'H1');
+  } catch(e) {}
+}
+
+function fmtInsertLink() {
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  const sel = window.getSelection();
+  const selectedText = sel ? sel.toString().trim() : '';
+  const url = (window.prompt('Länkadress (URL):', 'https://') || '').trim();
+  if (!url || url === 'https://') return;
+  ed.focus();
+  if (selectedText) {
+    document.execCommand('createLink', false, url);
+  } else {
+    const label = (window.prompt('Länktext:', url) || url).trim();
+    document.execCommand('insertHTML', false,
+      `<a href="${escHtml(url)}" target="_blank">${escHtml(label)}</a>`);
+  }
+  saveActiveNote();
+}
+
+function fmtInsertImage() {
+  if (!activeNoteId) return;
+  const sel = window.getSelection();
+  _savedImgRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+  document.getElementById('note-img-input').click();
+}
+
+function onImageFileSelected(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file || !activeNoteId) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    const caption = (window.prompt('Bildtext (valfri):', '') || '').trim();
+    const ed = document.getElementById('notes-editor-body');
+    if (!ed) return;
+    ed.focus();
+    if (_savedImgRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(_savedImgRange);
+      _savedImgRange = null;
+    }
+    const imgHtml = caption
+      ? `<span class="note-img-wrap"><img src="${base64}" alt="${escHtml(caption)}"><span class="note-img-caption">${escHtml(caption)}</span></span>`
+      : `<img src="${base64}" alt="Bild">`;
+    document.execCommand('insertHTML', false, imgHtml);
+    saveActiveNote();
+  };
+  reader.readAsDataURL(file);
+}
+
+function shareNote() {
+  if (!activeNoteId) return;
+  const note = state.notes.find(n => n.id === activeNoteId);
+  if (!note) return;
+  const ed = document.getElementById('notes-editor-body');
+  const text = ed ? (ed.innerText || '') : (note.text || '');
+  const title = getNoteTitle(note.text, note.html);
+  if (confirm('Dela via e-post?')) {
+    const subject = encodeURIComponent('Anteckning: ' + title);
+    window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(text)}`;
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Kopierat till urklipp!', 'success'));
+  }
+}
+
+function onEditorKeyDown(e) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'b') { e.preventDefault(); fmtCmd('bold'); }
+    if (e.key === 'i') { e.preventDefault(); fmtCmd('italic'); }
+  }
+}
+
+// =========================================================
+// FLIK-HANTERING FÖR ANTECKNINGAR
+// =========================================================
+function renderNoteTabs() {
+  const bar = document.getElementById('notes-tabs-bar');
+  if (!bar) return;
+  const addBtn = bar.querySelector('.note-tab-add-btn');
+  bar.querySelectorAll('.note-tab').forEach(el => el.remove());
+  noteTabsState.tabs.forEach(tab => {
+    const count = tab.filter
+      ? state.notes.filter(n => (n.tags || []).includes(tab.filter)).length
+      : state.notes.length;
+    const el = document.createElement('div');
+    el.className = 'note-tab' + (tab.id === noteTabsState.activeTabId ? ' active' : '');
+    el.dataset.id = tab.id;
+    const isEditable = tab.id !== 'all';
+    el.innerHTML = `<span class="note-tab-label"${isEditable ? ' contenteditable="true"' : ''}
+        onblur="renameNoteTab('${tab.id}', this.textContent)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+      >${escHtml(tab.label)}</span>
+      <span class="note-tab-count">${count}</span>
+      ${isEditable ? `<button class="note-tab-close" onclick="removeNoteTab('${tab.id}',event)" title="Ta bort vy">&#x00D7;</button>` : ''}`;
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('note-tab-close')) return;
+      if (e.target.contentEditable === 'true') return;
+      switchNoteTab(tab.id);
+    });
+    bar.insertBefore(el, addBtn);
+  });
+}
+
+function switchNoteTab(id) {
+  noteTabsState.activeTabId = id;
+  state.noteTabs = noteTabsState.tabs;
+  renderNotes();
+}
+
+function addNoteTab() {
+  const label = (window.prompt('Namn på ny vy:', 'Ny vy') || '').trim();
+  if (!label) return;
+  const filterRaw = (window.prompt('Filtrera på tagg (valfritt — lämna tomt för alla anteckningar):') || '').trim();
+  const filter = filterRaw ? filterRaw.toUpperCase() : null;
+  const id = 'tab-' + Date.now();
+  noteTabsState.tabs.push({ id, label, filter });
+  state.noteTabs = noteTabsState.tabs;
+  noteTabsState.activeTabId = id;
+  scheduleSave();
+  renderNotes();
+}
+
+function removeNoteTab(id, event) {
+  event.stopPropagation();
+  if (noteTabsState.tabs.length <= 1) return;
+  noteTabsState.tabs = noteTabsState.tabs.filter(t => t.id !== id);
+  if (noteTabsState.activeTabId === id) noteTabsState.activeTabId = 'all';
+  state.noteTabs = noteTabsState.tabs;
+  scheduleSave();
+  renderNotes();
+}
+
+function renameNoteTab(id, newLabel) {
+  const tab = noteTabsState.tabs.find(t => t.id === id);
+  if (!tab) return;
+  const label = (newLabel || '').trim();
+  if (!label) return;
+  tab.label = label;
+  state.noteTabs = noteTabsState.tabs;
+  scheduleSave();
+}
+
+// =========================================================
+// TAGG-HANTERING FÖR ANTECKNINGAR
+// =========================================================
+function renderNoteTagBar(note) {
+  const bar = document.getElementById('notes-tag-bar');
+  if (!bar) return;
+  const tags = note.tags || [];
+  bar.innerHTML = tags.map(tag =>
+    `<span class="note-tag-badge" style="${tagColor(tag)}" onclick="removeNoteTag('${escHtml(tag)}')" title="Klicka för att ta bort">${escHtml(tag)}</span>`
+  ).join('') + `<button class="note-tag-add-btn" onclick="addNoteTag()">+ Tagg</button>`;
+}
+
+function addNoteTag() {
+  if (!activeNoteId) return;
+  const raw = (window.prompt('Ny tagg:') || '').trim();
+  if (!raw) return;
+  const tag = raw.toUpperCase();
+  const note = state.notes.find(n => n.id === activeNoteId);
+  if (!note) return;
+  if (!note.tags) note.tags = [];
+  if (!note.tags.includes(tag)) {
+    note.tags.push(tag);
+    scheduleSave();
+    renderNoteTagBar(note);
+    updateNoteListItem(activeNoteId);
+  }
+}
+
+function removeNoteTag(tag) {
+  if (!activeNoteId) return;
+  const note = state.notes.find(n => n.id === activeNoteId);
+  if (!note || !note.tags) return;
+  note.tags = note.tags.filter(t => t !== tag);
+  scheduleSave();
+  renderNoteTagBar(note);
+  updateNoteListItem(activeNoteId);
 }
 
 // =========================================================
@@ -2619,7 +3229,8 @@ function acceptStructuredNote() {
 // =========================================================
 document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName.toLowerCase();
-  const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+  const isInput = tag === 'input' || tag === 'textarea' || tag === 'select'
+    || document.activeElement.contentEditable === 'true';
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
     document.getElementById('ai-float-toolbar').classList.remove('visible');
@@ -2632,7 +3243,7 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('click', e => {
   const toolbar = document.getElementById('ai-float-toolbar');
-  if (!toolbar.contains(e.target) && !e.target.closest('.notes-editor-textarea')) {
+  if (!toolbar.contains(e.target) && !e.target.closest('.notes-editor-body')) {
     toolbar.classList.remove('visible');
   }
   if (!e.target.closest('.note-template-picker')) {
@@ -2754,6 +3365,7 @@ function initApp() {
   if (_appInited) return;
   _appInited = true;
   loadData();
+  if (!localStorage.getItem('simpel_welcomed')) showWelcomeModal();
   checkOllama();
   setInterval(checkOllama, 30000);
   renderColorPicker('#2563EB');
@@ -2761,6 +3373,19 @@ function initApp() {
     this.style.height = 'auto';
     this.style.height = Math.max(this.scrollHeight, 180) + 'px';
   });
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement && document.activeElement.id === 'notes-editor-body') {
+      updateFmtToolbarState();
+    }
+  });
+  const edBody = document.getElementById('notes-editor-body');
+  if (edBody) {
+    edBody.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+  }
 }
 
 // Starta Ollama-kontrollen beroende på aktiv backend, sedan initiera appen.

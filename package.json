@@ -21,7 +21,8 @@
     "files": [
       "main.js",
       "preload.js",
-      "Simpel.html"
+      "Simpel.html",
+      "assets/**/*"
     ],
     "artifactName": "Simpel-Setup-${version}.exe",
     "win": {
