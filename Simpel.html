@@ -922,31 +922,6 @@ a { color: inherit; text-decoration: none; }
 }
 #update-banner-dismiss:hover { opacity: 1; }
 
-/* Welcome modal version row */
-.welcome-version-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--text-muted);
-  flex-wrap: wrap;
-}
-.welcome-update-btn {
-  background: var(--surface, #f1f5f9);
-  border: 1px solid var(--border);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--text);
-}
-.welcome-update-btn:hover { background: var(--border); }
-.welcome-update-btn:disabled { opacity: .6; cursor: default; }
-.welcome-update-status { font-style: italic; }
-
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -955,6 +930,35 @@ a { color: inherit; text-decoration: none; }
 /* =========================================================
    DASHBOARD VIEW
    ========================================================= */
+.dash-version-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.dash-version-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.dash-version-num { font-size: 18px; font-weight: 700; color: var(--text); }
+.dash-version-status { flex: 1; font-size: 13px; color: var(--text-muted); font-style: italic; min-width: 120px; }
+.dash-version-btn {
+  background: var(--surface, #f1f5f9);
+  border: 1px solid var(--border);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+}
+.dash-version-btn:hover { background: var(--border); }
+.dash-version-btn:disabled { opacity: .6; cursor: default; }
+.dash-version-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent-hover); }
+.dash-version-btn.primary:hover { background: var(--accent-hover); }
 .dash-grid-stats {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -1685,11 +1689,6 @@ a { color: inherit; text-decoration: none; }
         <span class="welcome-path-value" id="welcome-data-path" title="">läser&hellip;</span>
         <button class="welcome-path-copy" onclick="copyDataPath()" title="Kopiera sökväg">Kopiera</button>
       </div>
-      <div class="welcome-version-row">
-        <span>Version <span id="welcome-version">&hellip;</span></span>
-        <button class="welcome-update-btn" id="welcome-update-btn" onclick="manualCheckForUpdate()">Sök efter uppdateringar</button>
-        <span id="welcome-update-status" class="welcome-update-status"></span>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-primary" onclick="closeWelcomeModal()">Kom igång &rarr;</button>
@@ -1729,6 +1728,7 @@ let activeNoteTextarea = null;
 let activeNoteId = null;
 let noteSearchQuery = '';
 let noteTabsState = { tabs: [{ id: 'all', label: 'Alla', filter: null }], activeTabId: 'all' };
+let _updateInfo = { latestVersion: null, percent: null, lastStatusText: '' };
 
 const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
 
@@ -1981,15 +1981,6 @@ function updateReminderUI() {
 // =========================================================
 async function showWelcomeModal() {
   localStorage.setItem('simpel_welcomed', '1');
-  const versionEl = document.getElementById('welcome-version');
-  if (versionEl) {
-    if (_electronApi && _electronApi.app_version) {
-      try { versionEl.textContent = await _electronApi.app_version(); }
-      catch { versionEl.textContent = '–'; }
-    } else {
-      versionEl.textContent = 'webb';
-    }
-  }
   const pathEl = document.getElementById('welcome-data-path');
   if (pathEl) {
     try {
@@ -1998,8 +1989,6 @@ async function showWelcomeModal() {
       pathEl.title = p;
     } catch { pathEl.textContent = '–'; }
   }
-  const statusEl = document.getElementById('welcome-update-status');
-  if (statusEl) statusEl.textContent = '';
   document.getElementById('welcome-backdrop').classList.add('open');
 }
 async function copyDataPath() {
@@ -2015,28 +2004,33 @@ function closeWelcomeModal() {
   document.getElementById('welcome-backdrop').classList.remove('open');
 }
 
-async function manualCheckForUpdate() {
-  const status = document.getElementById('welcome-update-status');
-  const btn = document.getElementById('welcome-update-btn');
+async function dashboardCheckForUpdate() {
+  const status = document.getElementById('dash-version-status');
+  const btn = document.getElementById('dash-version-check-btn');
+  const setStatus = (txt) => {
+    _updateInfo.lastStatusText = txt;
+    if (status) status.textContent = txt;
+  };
   if (!_electronApi || !_electronApi.update_check) {
-    if (status) status.textContent = 'Endast tillgängligt i den installerade appen.';
+    setStatus('Endast tillgängligt i den installerade appen.');
     return;
   }
-  if (status) status.textContent = 'Söker...';
+  setStatus('Söker…');
   if (btn) btn.disabled = true;
   try {
     const res = await _electronApi.update_check();
     if (res && res.devMode) {
-      if (status) status.textContent = 'Utvecklingsläge — uppdateringar avaktiverade.';
+      setStatus('Utvecklingsläge — uppdateringar avaktiverade.');
     } else if (res && res.error) {
-      if (status) status.textContent = 'Kunde inte söka: ' + res.error;
+      setStatus('Kunde inte söka: ' + res.error);
     } else if (res && res.updateInfo && res.updateInfo.version) {
-      if (status) status.textContent = 'Hittade version ' + res.updateInfo.version + ' — laddas ner...';
+      _updateInfo.latestVersion = res.updateInfo.version;
+      setStatus('Version ' + res.updateInfo.version + ' hittad — laddas ner…');
     } else {
-      if (status) status.textContent = 'Du har den senaste versionen.';
+      setStatus('Du har den senaste versionen.');
     }
   } catch (e) {
-    if (status) status.textContent = 'Kunde inte söka: ' + (e && e.message ? e.message : e);
+    setStatus('Kunde inte söka: ' + (e && e.message ? e.message : e));
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2809,6 +2803,15 @@ function renderDashboard() {
     : `<tr><td colspan="4" class="dash-empty-msg" style="text-align:center;padding:24px;">Ingen aktivitet ännu — skapa din första uppgift!</td></tr>`;
 
   el.innerHTML = `
+    <div class="dash-version-card" id="dash-version-card">
+      <div>
+        <div class="dash-version-label">Aktuell version</div>
+        <div class="dash-version-num" id="dash-version-num">…</div>
+      </div>
+      <span class="dash-version-status" id="dash-version-status">${escHtml(_updateInfo.lastStatusText || '')}</span>
+      <button class="dash-version-btn" id="dash-version-check-btn" onclick="dashboardCheckForUpdate()">Sök efter uppdateringar</button>
+      <button class="dash-version-btn primary" id="dash-version-install-btn" style="display:none" onclick="installUpdate()">Starta om &amp; uppdatera</button>
+    </div>
     <section class="dash-grid-stats">
       <div class="dash-stat-card accent">
         <div class="dash-date-weekday">${weekday}</div>
@@ -2880,6 +2883,21 @@ function renderDashboard() {
         <tbody>${activityRows}</tbody>
       </table>
     </div>`;
+
+  (async () => {
+    const numEl = document.getElementById('dash-version-num');
+    if (!numEl) return;
+    if (_electronApi && _electronApi.app_version) {
+      try { numEl.textContent = await _electronApi.app_version(); }
+      catch { numEl.textContent = '–'; }
+    } else {
+      numEl.textContent = 'webb';
+    }
+  })();
+  if (_updateState === 'ready') {
+    const ib = document.getElementById('dash-version-install-btn');
+    if (ib) ib.style.display = '';
+  }
 }
 
 // =========================================================
@@ -3927,21 +3945,40 @@ function installUpdate() {
   }
 }
 
+function _setDashVersionStatus(text) {
+  _updateInfo.lastStatusText = text;
+  const el = document.getElementById('dash-version-status');
+  if (el) el.textContent = text;
+}
+function _setDashInstallBtn(visible) {
+  const el = document.getElementById('dash-version-install-btn');
+  if (el) el.style.display = visible ? '' : 'none';
+}
+
 function handleUpdateEvent(type, data) {
   if (type === 'available') {
     _updateState = 'downloading';
     _updateErrorShown = false;
     const v = data && data.version ? ` ${data.version}` : '';
+    if (data && data.version) _updateInfo.latestVersion = data.version;
     showUpdateBanner(`Ny version${v} laddas ner...`, { downloading: true });
+    _setDashVersionStatus(`Version${v} hittad — laddas ner…`);
   } else if (type === 'progress') {
     if (_updateState === 'downloading' && data && typeof data.percent === 'number') {
-      showUpdateBanner(`Laddar ner uppdatering... ${Math.round(data.percent)}%`, { downloading: true });
+      const pct = Math.round(data.percent);
+      _updateInfo.percent = pct;
+      showUpdateBanner(`Laddar ner uppdatering... ${pct}%`, { downloading: true });
+      const v = _updateInfo.latestVersion ? ` ${_updateInfo.latestVersion}` : '';
+      _setDashVersionStatus(`Laddar ner version${v}… ${pct}%`);
     }
   } else if (type === 'downloaded') {
     _updateState = 'ready';
     const v = data && data.version ? ` ${data.version}` : '';
+    if (data && data.version) _updateInfo.latestVersion = data.version;
     showUpdateBanner(`Version${v} är redo — starta om för att installera`, { showInstall: true });
     showToast(`Uppdatering${v} klar`, 'success');
+    _setDashVersionStatus(`Version${v} är redo att installeras.`);
+    _setDashInstallBtn(true);
   } else if (type === 'error') {
     _updateState = 'error';
     // Visa bara fel-toast en gång per session — annars spammar bakgrunds-pollingen
