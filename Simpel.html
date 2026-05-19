@@ -2495,13 +2495,11 @@ function renderNotes() {
   const listEl = document.getElementById('notes-list');
   if (!listEl) return;
   const query = noteSearchQuery.toLowerCase();
-  const activeTab = noteTabsState.tabs.find(t => t.id === noteTabsState.activeTabId);
-  const tabFilter = activeTab && activeTab.filter ? activeTab.filter : null;
   const filtered = state.notes.filter(n => {
     const title = getNoteTitle(n.text, n.html).toLowerCase();
     const matchSearch = !query || title.includes(query);
-    const matchTab = !tabFilter || (n.tags || []).includes(tabFilter);
-    return matchSearch && matchTab;
+    const matchTag = !activeTagFilter || (n.tags || []).includes(activeTagFilter);
+    return matchSearch && matchTag;
   });
   if (!filtered.length) {
     listEl.innerHTML = `<div class="notes-list-empty">
@@ -2518,7 +2516,7 @@ function renderNotes() {
         ? `<div class="note-list-tags">${(n.tags).map(tag =>
             `<span class="note-tag-badge" style="${tagColor(tag)}">${escHtml(tag)}</span>`
           ).join('')}</div>` : '';
-      return `<div class="note-list-item${n.id === activeNoteId ? ' active' : ''}" onclick="selectNote('${n.id}')" id="nli-${n.id}">
+      return `<div class="note-list-item${n.id === activeNoteId ? ' active' : ''}" onclick="selectNote('${n.id}')" oncontextmenu="showNoteContextMenu(event, '${n.id}')" id="nli-${n.id}">
         <div class="note-list-title">${title}</div>
         ${tagsHtml}
         ${preview ? `<div class="note-list-preview">${preview}</div>` : ''}
@@ -2529,6 +2527,7 @@ function renderNotes() {
       </div>`;
     }).join('');
   }
+  renderNoteTagFilter();
   if (activeNoteId) {
     const note = state.notes.find(n => n.id === activeNoteId);
     if (note) showNoteEditor(note);
@@ -2577,10 +2576,7 @@ function filterNotes(query) {
 
 function addNote() {
   const note = { id: Date.now().toString(), text: '', html: '', tags: [], createdAt: new Date().toISOString() };
-  if (noteTabsState.activeTabId !== 'all') {
-    const tab = noteTabsState.tabs.find(t => t.id === noteTabsState.activeTabId);
-    if (tab && tab.filter) note.tags = [tab.filter];
-  }
+  if (activeTagFilter) note.tags = [activeTagFilter];
   state.notes.unshift(note);
   scheduleSave();
   activeNoteId = note.id;
@@ -3873,73 +3869,98 @@ function onEditorKeyDown(e) {
 }
 
 // =========================================================
-// FLIK-HANTERING FÖR ANTECKNINGAR
+// TAGG-FILTER OCH KONTEXTMENY FÖR ANTECKNINGAR
 // =========================================================
-function renderNoteTabs() {
-  const bar = document.getElementById('notes-tabs-bar');
+function renderNoteTagFilter() {
+  const bar = document.getElementById('notes-tag-filter');
   if (!bar) return;
-  const addBtn = bar.querySelector('.note-tab-add-btn');
-  bar.querySelectorAll('.note-tab').forEach(el => el.remove());
-  noteTabsState.tabs.forEach(tab => {
-    const count = tab.filter
-      ? state.notes.filter(n => (n.tags || []).includes(tab.filter)).length
-      : state.notes.length;
-    const el = document.createElement('div');
-    el.className = 'note-tab' + (tab.id === noteTabsState.activeTabId ? ' active' : '');
-    el.dataset.id = tab.id;
-    const isEditable = tab.id !== 'all';
-    el.innerHTML = `<span class="note-tab-label"${isEditable ? ' contenteditable="true"' : ''}
-        onblur="renameNoteTab('${tab.id}', this.textContent)"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
-      >${escHtml(tab.label)}</span>
-      <span class="note-tab-count">${count}</span>
-      ${isEditable ? `<button class="note-tab-close" onclick="removeNoteTab('${tab.id}',event)" title="Ta bort vy">&#x00D7;</button>` : ''}`;
-    el.addEventListener('click', (e) => {
-      if (e.target.classList.contains('note-tab-close')) return;
-      if (e.target.contentEditable === 'true') return;
-      switchNoteTab(tab.id);
-    });
-    bar.insertBefore(el, addBtn);
-  });
+  const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort();
+  if (activeTagFilter && !allTags.includes(activeTagFilter)) activeTagFilter = null;
+  if (!allTags.length) { bar.innerHTML = ''; return; }
+  const allChip = `<span class="notes-tag-filter-chip all-chip${!activeTagFilter ? ' active' : ''}"
+    onclick="setTagFilter(null)">Alla</span>`;
+  const tagChips = allTags.map(tag =>
+    `<span class="notes-tag-filter-chip${tag === activeTagFilter ? ' active' : ''}"
+       style="${tagColor(tag)}"
+       onclick="setTagFilter('${escHtml(tag)}')">${escHtml(tag)}</span>`
+  ).join('');
+  bar.innerHTML = allChip + tagChips;
 }
 
-function switchNoteTab(id) {
-  noteTabsState.activeTabId = id;
-  state.noteTabs = noteTabsState.tabs;
+function setTagFilter(tag) {
+  activeTagFilter = (tag === activeTagFilter) ? null : tag;
   renderNotes();
 }
 
-function addNoteTab() {
-  const label = (window.prompt('Namn på ny vy:', 'Ny vy') || '').trim();
-  if (!label) return;
-  const filterRaw = (window.prompt('Filtrera på tagg (valfritt — lämna tomt för alla anteckningar):') || '').trim();
-  const filter = filterRaw ? filterRaw.toUpperCase() : null;
-  const id = 'tab-' + Date.now();
-  noteTabsState.tabs.push({ id, label, filter });
-  state.noteTabs = noteTabsState.tabs;
-  noteTabsState.activeTabId = id;
-  scheduleSave();
-  renderNotes();
+let contextMenuNoteId = null;
+
+function showNoteContextMenu(event, noteId) {
+  event.preventDefault();
+  contextMenuNoteId = noteId;
+  const note = state.notes.find(n => n.id === noteId);
+  if (!note) return;
+  const menu = document.getElementById('note-context-menu');
+  if (!menu) return;
+  const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort();
+  const noteTags = note.tags || [];
+  let html = '';
+  if (allTags.length) {
+    html += allTags.map(tag => {
+      const checked = noteTags.includes(tag) ? ' checked' : '';
+      return `<div class="note-context-menu-item${checked}"
+         onclick="toggleNoteTagFromMenu('${escHtml(tag)}')">${escHtml(tag)}</div>`;
+    }).join('');
+    html += `<div class="note-context-menu-sep"></div>`;
+  } else {
+    html += `<div class="note-context-menu-empty">Inga taggar än</div>`;
+    html += `<div class="note-context-menu-sep"></div>`;
+  }
+  html += `<div class="note-context-menu-item new-tag" onclick="addTagFromMenu()">+ Ny tagg&hellip;</div>`;
+  menu.innerHTML = html;
+  menu.classList.add('open');
+  const x = Math.min(event.clientX, window.innerWidth - menu.offsetWidth - 10);
+  const y = Math.min(event.clientY, window.innerHeight - menu.offsetHeight - 10);
+  menu.style.left = Math.max(4, x) + 'px';
+  menu.style.top = Math.max(4, y) + 'px';
 }
 
-function removeNoteTab(id, event) {
-  event.stopPropagation();
-  if (noteTabsState.tabs.length <= 1) return;
-  noteTabsState.tabs = noteTabsState.tabs.filter(t => t.id !== id);
-  if (noteTabsState.activeTabId === id) noteTabsState.activeTabId = 'all';
-  state.noteTabs = noteTabsState.tabs;
-  scheduleSave();
-  renderNotes();
+function hideNoteContextMenu() {
+  const menu = document.getElementById('note-context-menu');
+  if (menu) menu.classList.remove('open');
+  contextMenuNoteId = null;
 }
 
-function renameNoteTab(id, newLabel) {
-  const tab = noteTabsState.tabs.find(t => t.id === id);
-  if (!tab) return;
-  const label = (newLabel || '').trim();
-  if (!label) return;
-  tab.label = label;
-  state.noteTabs = noteTabsState.tabs;
+function toggleNoteTagFromMenu(tag) {
+  if (!contextMenuNoteId) return;
+  const note = state.notes.find(n => n.id === contextMenuNoteId);
+  if (!note) return;
+  if (!note.tags) note.tags = [];
+  if (note.tags.includes(tag)) {
+    note.tags = note.tags.filter(t => t !== tag);
+  } else {
+    note.tags.push(tag);
+  }
   scheduleSave();
+  const wasActive = contextMenuNoteId === activeNoteId;
+  hideNoteContextMenu();
+  renderNotes();
+  if (wasActive) renderNoteTagBar(note);
+}
+
+function addTagFromMenu() {
+  if (!contextMenuNoteId) return;
+  const raw = (window.prompt('Ny tagg:') || '').trim();
+  if (!raw) { hideNoteContextMenu(); return; }
+  const tag = raw.toUpperCase();
+  const note = state.notes.find(n => n.id === contextMenuNoteId);
+  if (!note) return;
+  if (!note.tags) note.tags = [];
+  if (!note.tags.includes(tag)) note.tags.push(tag);
+  scheduleSave();
+  const wasActive = contextMenuNoteId === activeNoteId;
+  hideNoteContextMenu();
+  renderNotes();
+  if (wasActive) renderNoteTagBar(note);
 }
 
 // =========================================================
@@ -3977,7 +3998,7 @@ function removeNoteTag(tag) {
   note.tags = note.tags.filter(t => t !== tag);
   scheduleSave();
   renderNoteTagBar(note);
-  updateNoteListItem(activeNoteId);
+  renderNotes();
 }
 
 // =========================================================
@@ -3992,12 +4013,17 @@ document.addEventListener('keydown', e => {
     document.getElementById('ai-float-toolbar').classList.remove('visible');
     document.querySelectorAll('.template-dropdown.open').forEach(d => d.classList.remove('open'));
     document.querySelectorAll('.note-template-picker-btn.active').forEach(b => b.classList.remove('active'));
+    hideNoteContextMenu();
     activeDropNoteId = null;
   }
   if (!isInput && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); openTaskModal(); }
 });
 
 document.addEventListener('click', e => {
+  const menu = document.getElementById('note-context-menu');
+  if (menu && menu.classList.contains('open') && !menu.contains(e.target)) {
+    hideNoteContextMenu();
+  }
   const toolbar = document.getElementById('ai-float-toolbar');
   if (!toolbar.contains(e.target) && !e.target.closest('.notes-editor-body')) {
     toolbar.classList.remove('visible');
