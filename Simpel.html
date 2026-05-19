@@ -1953,6 +1953,7 @@ function updateReminderUI() {
 // WELCOME MODAL
 // =========================================================
 async function showWelcomeModal() {
+  localStorage.setItem('simpel_welcomed', '1');
   const versionEl = document.getElementById('welcome-version');
   if (versionEl) {
     if (_electronApi && _electronApi.app_version) {
@@ -1967,7 +1968,6 @@ async function showWelcomeModal() {
   document.getElementById('welcome-backdrop').classList.add('open');
 }
 function closeWelcomeModal() {
-  localStorage.setItem('simpel_welcomed', '1');
   document.getElementById('welcome-backdrop').classList.remove('open');
 }
 
