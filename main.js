@@ -1,9 +1,52 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu } = require('electron');
-const { autoUpdater } = require('electron-updater');
-const fs   = require('fs');
-const path = require('path');
-const http = require('http');
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, shell } = require('electron');
+const fs    = require('fs');
+const path  = require('path');
+const http  = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
+
+const UPDATE_REPO_OWNER = 'eriknunezastorga';
+const UPDATE_REPO_NAME  = 'Simpel';
+
+function fetchLatestRelease(owner, repo) {
+  return new Promise((resolve, reject) => {
+    const req = https.get({
+      hostname: 'api.github.com',
+      path: `/repos/${owner}/${repo}/releases/latest`,
+      headers: {
+        'User-Agent': 'Simpel',
+        'Accept': 'application/vnd.github+json',
+      },
+    }, (res) => {
+      if (res.statusCode === 404) { res.resume(); resolve(null); return; }
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        res.resume();
+        reject(new Error(`GitHub API svarade ${res.statusCode}`));
+        return;
+      }
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)); }
+        catch (e) { reject(new Error('Kunde inte tolka GitHub-svaret')); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(10000, () => { req.destroy(new Error('Timeout mot GitHub')); });
+  });
+}
+
+function compareSemver(a, b) {
+  const norm = v => String(v).replace(/^v/i, '').split(/[-+]/)[0].split('.').map(n => parseInt(n, 10) || 0);
+  const aa = norm(a), bb = norm(b);
+  for (let i = 0; i < Math.max(aa.length, bb.length); i++) {
+    const x = aa[i] || 0, y = bb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
 
 // =========================================================
 // DATA PATH
@@ -122,18 +165,39 @@ ipcMain.handle('app:version', () => app.getVersion());
 
 ipcMain.handle('update:check', async () => {
   if (!app.isPackaged) return { devMode: true };
+  const currentVersion = app.getVersion();
   try {
-    const res = await autoUpdater.checkForUpdates();
-    return { updateInfo: res ? res.updateInfo : null };
+    const release = await fetchLatestRelease(UPDATE_REPO_OWNER, UPDATE_REPO_NAME);
+    if (!release || !release.tag_name) {
+      return { upToDate: true, currentVersion };
+    }
+    const latestVersion = String(release.tag_name).replace(/^v/i, '');
+    if (compareSemver(latestVersion, currentVersion) <= 0) {
+      return { upToDate: true, currentVersion, latestVersion };
+    }
+    const exeAsset = (release.assets || []).find(a => /\.exe$/i.test(a.name));
+    return {
+      updateAvailable: true,
+      currentVersion,
+      latestVersion,
+      downloadUrl: exeAsset ? exeAsset.browser_download_url : release.html_url,
+      releaseUrl:  release.html_url,
+      assetName:   exeAsset ? exeAsset.name : null,
+    };
   } catch (e) {
     return { error: e.message };
   }
 });
 
-ipcMain.handle('update:install', () => {
-  if (app.isPackaged) {
-    isQuitting = true;
-    autoUpdater.quitAndInstall();
+ipcMain.handle('update:download', async (_e, url) => {
+  if (typeof url !== 'string' || !/^https:\/\/github\.com\//.test(url)) {
+    return { ok: false, error: 'Ogiltig URL' };
+  }
+  try {
+    await shell.openExternal(url);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
   }
 });
 
@@ -205,54 +269,10 @@ function createTray() {
   tray.on('double-click', () => { mainWindow.show(); mainWindow.focus(); });
 }
 
-function sendToRenderer(channel, payload) {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send(channel, payload);
-  }
-}
-
-function setupAutoUpdater() {
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
-
-  autoUpdater.on('update-available', (info) => {
-    sendToRenderer('update:available', { version: info && info.version });
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Simpel — Uppdatering hittad',
-        body: 'En ny version laddas ner i bakgrunden...',
-      }).show();
-    }
-  });
-
-  autoUpdater.on('download-progress', (progress) => {
-    sendToRenderer('update:progress', { percent: progress && progress.percent });
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    sendToRenderer('update:downloaded', { version: info && info.version });
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Simpel — Uppdatering klar',
-        body: 'Starta om appen för att installera den nya versionen.',
-      }).show();
-    }
-  });
-
-  autoUpdater.on('error', (err) => {
-    sendToRenderer('update:error', { message: err && err.message });
-  });
-
-  // Check on startup, then every 4 hours
-  autoUpdater.checkForUpdates().catch(() => {});
-  setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 60 * 60 * 1000);
-}
-
 app.whenReady().then(() => {
   ensureOllama().catch(() => {});
   createWindow();
   createTray();
-  if (app.isPackaged) setupAutoUpdater();
 });
 
 // Keep app alive in tray — only quit via tray menu

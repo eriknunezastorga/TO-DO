@@ -12,13 +12,7 @@ contextBridge.exposeInMainWorld('electronApi', {
   import_dialog:  ()       => ipcRenderer.invoke('import_dialog'),
   ensure_ollama:  ()       => ipcRenderer.invoke('ensure_ollama'),
   onOpenTask:     (cb)     => ipcRenderer.on('open-task', (_e, id) => cb(id)),
-  app_version:    ()       => ipcRenderer.invoke('app:version'),
-  update_check:   ()       => ipcRenderer.invoke('update:check'),
-  update_install: ()       => ipcRenderer.invoke('update:install'),
-  onUpdateEvent:  (cb)     => {
-    ipcRenderer.on('update:available',  (_e, d) => cb('available',  d));
-    ipcRenderer.on('update:progress',   (_e, d) => cb('progress',   d));
-    ipcRenderer.on('update:downloaded', (_e, d) => cb('downloaded', d));
-    ipcRenderer.on('update:error',      (_e, d) => cb('error',      d));
-  },
+  app_version:     ()       => ipcRenderer.invoke('app:version'),
+  update_check:    ()       => ipcRenderer.invoke('update:check'),
+  update_download: (url)    => ipcRenderer.invoke('update:download', url),
 });

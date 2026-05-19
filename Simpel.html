@@ -145,6 +145,7 @@ a { color: inherit; text-decoration: none; }
 #search-input:focus { border-color: var(--accent); background: #fff; }
 .search-wrap { position: relative; flex: 1; max-width: 320px; }
 .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 15px; height: 15px; pointer-events: none; }
+mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-radius: 2px; }
 
 /* VIEW CONTAINER */
 #view-container { flex: 1; overflow-y: auto; padding: 20px 24px; }
@@ -435,6 +436,43 @@ a { color: inherit; text-decoration: none; }
 }
 .note-tag-add-btn:hover { background: #FDE68A; }
 .note-list-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; }
+/* -------- TAGG-FILTER OVANFÖR NOTES-LISTAN -------- */
+.notes-tag-filter {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 6px 14px; border-bottom: 1px solid #FEF3C7;
+  background: #FFFBEB; min-height: 32px; align-items: center;
+}
+.notes-tag-filter:empty { display: none; }
+.notes-tag-filter-chip {
+  font-size: 10.5px; font-weight: 700; padding: 3px 8px;
+  border-radius: 12px; letter-spacing: .04em; text-transform: uppercase;
+  cursor: pointer; border: 1px solid transparent;
+  transition: opacity .12s, border-color .12s;
+}
+.notes-tag-filter-chip:hover { opacity: .8; }
+.notes-tag-filter-chip.active {
+  border-color: #92400E; box-shadow: 0 0 0 1px #92400E inset;
+}
+.notes-tag-filter-chip.all-chip { background: #FEF9C3; color: #92400E; }
+/* -------- KONTEXTMENY (högerklick på anteckning) -------- */
+.note-context-menu {
+  position: fixed; display: none; min-width: 200px;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12); padding: 4px 0;
+  z-index: 9999; font-size: 12px; max-height: 320px; overflow-y: auto;
+}
+.note-context-menu.open { display: block; }
+.note-context-menu-item {
+  padding: 6px 12px 6px 28px; cursor: pointer; position: relative;
+  color: var(--text); white-space: nowrap;
+}
+.note-context-menu-item:hover { background: #FEF9C3; }
+.note-context-menu-item.checked::before {
+  content: '\2714'; position: absolute; left: 10px; color: #92400E; font-weight: 700;
+}
+.note-context-menu-item.new-tag { color: #92400E; font-weight: 600; }
+.note-context-menu-sep { border-bottom: 1px solid #FEF3C7; margin: 4px 0; }
+.note-context-menu-empty { padding: 6px 12px; color: #9CA3AF; font-style: italic; }
 /* -------- CONTENTEDITABLE EDITOR -------- */
 .notes-editor-body {
   flex: 1; overflow-y: auto;
@@ -1320,7 +1358,7 @@ a { color: inherit; text-decoration: none; }
     <div id="update-banner">
       <span id="update-banner-text">Ny version finns</span>
       <div id="update-banner-actions">
-        <button id="update-banner-install" onclick="installUpdate()" style="display:none">Starta om &amp; uppdatera</button>
+        <button id="update-banner-install" onclick="downloadUpdate()" style="display:none">Ladda ner uppdatering</button>
         <button id="update-banner-dismiss" onclick="dismissUpdateBanner()" aria-label="Stäng">&#x2715;</button>
       </div>
     </div>
@@ -1379,6 +1417,7 @@ a { color: inherit; text-decoration: none; }
                 <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </button>
             </div>
+            <div class="notes-tag-filter" id="notes-tag-filter"></div>
             <div class="notes-list" id="notes-list"></div>
           </div>
           <!-- RIGHT PANEL: editor -->
@@ -1751,6 +1790,9 @@ a { color: inherit; text-decoration: none; }
   </div>
 </div>
 
+<!-- NOTE CONTEXT MENU (högerklick på anteckning i listan) -->
+<div class="note-context-menu" id="note-context-menu"></div>
+
 <!-- AI FLOAT TOOLBAR (for notes) -->
 <div class="ai-float-toolbar" id="ai-float-toolbar">
   <button class="ai-float-btn" onclick="aiWriteAssist('improve')">Forbattra</button>
@@ -1782,8 +1824,8 @@ let activeNoteForAI = null;
 let activeNoteTextarea = null;
 let activeNoteId = null;
 let noteSearchQuery = '';
-let noteTabsState = { tabs: [{ id: 'all', label: 'Alla', filter: null }], activeTabId: 'all' };
-let _updateInfo = { latestVersion: null, percent: null, lastStatusText: '' };
+let activeTagFilter = null;
+let _updateInfo = { latestVersion: null, percent: null, lastStatusText: '', downloadUrl: null, assetName: null };
 
 const PROJECT_COLORS = ['#2563EB','#DC2626','#16A34A','#D97706','#7C3AED','#0891B2','#DB2777','#EA580C','#4338CA','#059669'];
 
@@ -1855,9 +1897,6 @@ async function loadData() {
     state.tasks = data.tasks || [];
     state.projects = data.projects || [];
     state.notes = data.notes || [];
-    state.noteTabs = data.noteTabs || [{ id: 'all', label: 'Alla', filter: null }];
-    noteTabsState.tabs = state.noteTabs;
-    noteTabsState.activeTabId = state.noteTabs[0]?.id || 'all';
   } catch(e) {
     console.error('Load failed', e);
   }
@@ -1871,18 +1910,16 @@ async function loadData() {
 // =========================================================
 function getPrioritySortVal(p) { return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
 
+function taskMatchesSearch(t, q) {
+  if (!q) return true;
+  return (t.title || '').toLowerCase().includes(q.toLowerCase());
+}
+
 function getFilteredTasks() {
   let tasks = state.tasks.filter(t => !t.completed);
   if (filterProject) tasks = tasks.filter(t => t.projectId === filterProject);
   if (filterPriority !== 'all') tasks = tasks.filter(t => t.priority === filterPriority);
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    tasks = tasks.filter(t =>
-      t.title.toLowerCase().includes(q) ||
-      (t.notes||'').toLowerCase().includes(q) ||
-      (t.tags||[]).some(tag => tag.toLowerCase().includes(q))
-    );
-  }
+  if (searchQuery) tasks = tasks.filter(t => taskMatchesSearch(t, searchQuery));
   if (sortByDate) {
     tasks.sort((a,b) => {
       const da = a.deadline||'9999-99-99', db = b.deadline||'9999-99-99';
@@ -2060,32 +2097,35 @@ function closeWelcomeModal() {
 }
 
 async function dashboardCheckForUpdate() {
-  const status = document.getElementById('dash-version-status');
   const btn = document.getElementById('dash-version-check-btn');
-  const setStatus = (txt) => {
-    _updateInfo.lastStatusText = txt;
-    if (status) status.textContent = txt;
-  };
   if (!_electronApi || !_electronApi.update_check) {
-    setStatus('Endast tillgängligt i den installerade appen.');
+    _setDashVersionStatus('Endast tillgängligt i den installerade appen.');
     return;
   }
-  setStatus('Söker…');
+  _setDashVersionStatus('Söker…');
+  _setDashDownloadBtn(false);
+  _updateInfo.downloadUrl = null;
+  _updateInfo.assetName = null;
   if (btn) btn.disabled = true;
   try {
     const res = await _electronApi.update_check();
     if (res && res.devMode) {
-      setStatus('Utvecklingsläge — uppdateringar avaktiverade.');
+      _setDashVersionStatus('Utvecklingsläge — uppdateringar avaktiverade.');
     } else if (res && res.error) {
-      setStatus('Kunde inte söka: ' + res.error);
-    } else if (res && res.updateInfo && res.updateInfo.version) {
-      _updateInfo.latestVersion = res.updateInfo.version;
-      setStatus('Version ' + res.updateInfo.version + ' hittad — laddas ner…');
+      _setDashVersionStatus('Kunde inte söka: ' + res.error);
+    } else if (res && res.updateAvailable) {
+      _updateInfo.latestVersion = res.latestVersion;
+      _updateInfo.downloadUrl = res.downloadUrl;
+      _updateInfo.assetName = res.assetName || null;
+      _setDashVersionStatus('Ny version ' + res.latestVersion + ' tillgänglig.');
+      _setDashDownloadBtn(true, res.latestVersion, res.assetName);
+    } else if (res && res.upToDate) {
+      _setDashVersionStatus('Du har den senaste versionen (' + (res.currentVersion || '') + ').');
     } else {
-      setStatus('Du har den senaste versionen.');
+      _setDashVersionStatus('Du har den senaste versionen.');
     }
   } catch (e) {
-    setStatus('Kunde inte söka: ' + (e && e.message ? e.message : e));
+    _setDashVersionStatus('Kunde inte söka: ' + (e && e.message ? e.message : e));
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2108,7 +2148,7 @@ function saveTask() {
   if (id) {
     // Clear fired flag so updated reminder can trigger again
     const existing = state.tasks.find(t => t.id === id);
-    if (existing) existing._notifFired = false;
+    if (existing) existing.reminderSentAt = null;
     updateTask(id, fields);
   } else {
     createTask(fields);
@@ -2166,7 +2206,12 @@ function toggleSort() {
 
 function onSearch(q) {
   searchQuery = q;
-  renderTaskList();
+  noteSearchQuery = q;
+  const notesSearchEl = document.getElementById('notes-search');
+  if (notesSearchEl && notesSearchEl.value !== q) notesSearchEl.value = q;
+  if (currentView === 'tasks')       renderTaskList();
+  else if (currentView === 'kanban') renderKanban();
+  else if (currentView === 'notes')  renderNotes();
 }
 
 function filterByProject(id) {
@@ -2219,7 +2264,7 @@ function renderTaskCard(t) {
   return `<div class="task-card priority-${t.priority}" id="tc-${t.id}">
     <div class="task-header">
       <input type="checkbox" class="task-checkbox" ${t.completed?'checked':''} onchange="completeTask('${t.id}')">
-      <span class="task-title ${t.completed?'done':''}">${escHtml(stripMarkdown(t.title))}</span>
+      <span class="task-title ${t.completed?'done':''}">${highlightMatch(stripMarkdown(t.title), searchQuery)}</span>
       <span class="priority-badge ${t.priority}">${t.priority==='high'?'Hög':t.priority==='medium'?'Medel':'Låg'}</span>
       <div class="task-actions">
         <button class="btn-edit" title="Redigera" onclick="openEditTaskModal('${t.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -2453,9 +2498,8 @@ function renderNotes() {
   const activeTab = noteTabsState.tabs.find(t => t.id === noteTabsState.activeTabId);
   const tabFilter = activeTab && activeTab.filter ? activeTab.filter : null;
   const filtered = state.notes.filter(n => {
-    const plain = (n.text || '').toLowerCase();
-    const rich  = n.html ? stripHtml(n.html).toLowerCase() : '';
-    const matchSearch = !query || plain.includes(query) || rich.includes(query);
+    const title = getNoteTitle(n.text, n.html).toLowerCase();
+    const matchSearch = !query || title.includes(query);
     const matchTab = !tabFilter || (n.tags || []).includes(tabFilter);
     return matchSearch && matchTab;
   });
@@ -2466,7 +2510,7 @@ function renderNotes() {
     </div>`;
   } else {
     listEl.innerHTML = filtered.map(n => {
-      const title   = escHtml(getNoteTitle(n.text, n.html));
+      const title   = highlightMatch(getNoteTitle(n.text, n.html), noteSearchQuery);
       const preview = escHtml(getNotePreview(n.text));
       const date    = getRelativeDate(n.updatedAt || n.createdAt);
       const words   = (n.text || '').trim().split(/\s+/).filter(Boolean).length;
@@ -2525,6 +2569,9 @@ function selectNote(id) {
 
 function filterNotes(query) {
   noteSearchQuery = query;
+  searchQuery = query;
+  const topEl = document.getElementById('search-input');
+  if (topEl && topEl.value !== query) topEl.value = query;
   renderNotes();
 }
 
@@ -2588,7 +2635,7 @@ function updateNoteListItem(id) {
   if (!note) return;
   const el = document.getElementById('nli-' + id);
   if (!el) return;
-  const title   = escHtml(getNoteTitle(note.text, note.html));
+  const title   = highlightMatch(getNoteTitle(note.text, note.html), noteSearchQuery);
   const preview = escHtml(getNotePreview(note.text));
   const date    = getRelativeDate(note.updatedAt || note.createdAt);
   const words   = (note.text || '').trim().split(/\s+/).filter(Boolean).length;
@@ -2670,10 +2717,12 @@ function checkNoteSelection(e) {
 // =========================================================
 function renderKanban() {
   const cols = { todo: [], doing: [], done: [] };
-  state.tasks.filter(t => !t.completed).forEach(t => {
-    const col = cols[t.kanbanCol] || cols.todo;
-    col.push(t);
-  });
+  state.tasks
+    .filter(t => !t.completed && taskMatchesSearch(t, searchQuery))
+    .forEach(t => {
+      const col = cols[t.kanbanCol] || cols.todo;
+      col.push(t);
+    });
   // Sort by priority within columns
   Object.values(cols).forEach(arr => arr.sort((a,b) => getPrioritySortVal(a.priority) - getPrioritySortVal(b.priority)));
   ['todo','doing','done'].forEach(col => {
@@ -2683,7 +2732,7 @@ function renderKanban() {
       <div class="kanban-card priority-${t.priority}" draggable="true"
         ondragstart="kbDragStart(event,'${t.id}')"
         onclick="openEditTaskModal('${t.id}')">
-        <div class="kanban-card-title">${escHtml(t.title)}</div>
+        <div class="kanban-card-title">${highlightMatch(t.title, searchQuery)}</div>
         <div class="kanban-card-meta">${t.deadline ? formatDate(t.deadline) : ''}${t.deadline&&t.tags?.length?' · ':''}${(t.tags||[]).slice(0,2).join(', ')}</div>
       </div>`).join('');
   });
@@ -2865,7 +2914,7 @@ function renderDashboard() {
       </div>
       <span class="dash-version-status" id="dash-version-status">${escHtml(_updateInfo.lastStatusText || '')}</span>
       <button class="dash-version-btn" id="dash-version-check-btn" onclick="dashboardCheckForUpdate()">Sök efter uppdateringar</button>
-      <button class="dash-version-btn primary" id="dash-version-install-btn" style="display:none" onclick="installUpdate()">Starta om &amp; uppdatera</button>
+      <button class="dash-version-btn primary" id="dash-version-download-btn" style="display:none" onclick="downloadUpdate()">Ladda ner uppdatering</button>
     </div>
     <section class="dash-grid-stats">
       <div class="dash-stat-card accent">
@@ -2949,9 +2998,8 @@ function renderDashboard() {
       numEl.textContent = 'webb';
     }
   })();
-  if (_updateState === 'ready') {
-    const ib = document.getElementById('dash-version-install-btn');
-    if (ib) ib.style.display = '';
+  if (_updateInfo.downloadUrl) {
+    _setDashDownloadBtn(true, _updateInfo.latestVersion, _updateInfo.assetName);
   }
 }
 
@@ -2972,6 +3020,12 @@ function renderAll() {
 // VIEW SWITCHING
 // =========================================================
 const VIEW_TITLES = { dashboard: 'Dashboard', tasks: 'Uppgifter', calendar: 'Kalender', notes: 'Anteckningar', kanban: 'Kanban', completed: 'Avklarade' };
+const SEARCH_VISIBLE_VIEWS = new Set(['tasks', 'kanban', 'notes']);
+const SEARCH_PLACEHOLDERS = {
+  tasks:  'Sök uppgifter...',
+  kanban: 'Sök i kanban...',
+  notes:  'Sök anteckningar...'
+};
 function switchView(view) {
   currentView = view;
   document.querySelectorAll('[id$="-view"]').forEach(el => el.style.display = 'none');
@@ -2979,6 +3033,19 @@ function switchView(view) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
   document.getElementById('view-title').textContent = VIEW_TITLES[view] || view;
   document.getElementById('view-container').classList.toggle('notes-active', view === 'notes');
+  const searchWrap = document.querySelector('.search-wrap');
+  const topSearch = document.getElementById('search-input');
+  if (SEARCH_VISIBLE_VIEWS.has(view)) {
+    if (searchWrap) searchWrap.style.display = '';
+    if (topSearch) topSearch.placeholder = SEARCH_PLACEHOLDERS[view] || 'Sök...';
+  } else {
+    if (searchWrap) searchWrap.style.display = 'none';
+    searchQuery = '';
+    noteSearchQuery = '';
+    if (topSearch) topSearch.value = '';
+    const notesEl = document.getElementById('notes-search');
+    if (notesEl) notesEl.value = '';
+  }
   if (view === 'dashboard') renderDashboard();
   if (view === 'calendar') renderCalendar();
   if (view === 'notes') renderNotes();
@@ -3078,19 +3145,28 @@ function getReminderDateTime(task) {
 
 function checkReminders() {
   const now = Date.now();
+  const today = new Date(); today.setHours(0,0,0,0);
   state.tasks.filter(t => !t.completed && t.reminder !== 'none').forEach(t => {
-    if (t._notifFired) return;
+    if (t.reminderSentAt) return;
     const dt = getReminderDateTime(t);
     if (!dt) return;
-    const diff = Math.abs(now - dt.getTime());
-    if (diff <= 60000) {
-      t._notifFired = true;
-      triggerNotification(t.title, `Påminnelse: ${t.title}${t.deadline ? ' · '+formatDate(t.deadline) : ''}`, t.id, t.reminderEmail);
+    if (now < dt.getTime()) return;
+    if (t.deadline) {
+      const dl = new Date(t.deadline + 'T00:00:00');
+      if (dl.getTime() < today.getTime()) {
+        t.reminderSentAt = new Date().toISOString();
+        scheduleSave();
+        return;
+      }
     }
+    t.reminderSentAt = new Date().toISOString();
+    scheduleSave();
+    triggerNotification(t.title, `Påminnelse: ${t.title}${t.deadline ? ' · '+formatDate(t.deadline) : ''}`, t.id, t.reminderEmail);
   });
 }
 
 function triggerNotification(title, body, taskId, reminderEmail) {
+  showToast(`⏰ ${title} — ${body}`, 'info');
   bridge.call('notify', title, body, taskId).catch(() => {});
   if (reminderEmail) {
     const sub = encodeURIComponent('Påminnelse: ' + title);
@@ -3945,6 +4021,12 @@ function closeModalOnBackdrop(e, backdropId) {
 function escHtml(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function highlightMatch(text, q) {
+  const safe = escHtml(text || '');
+  if (!q) return safe;
+  const escQ = String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(escQ, 'gi'), m => `<mark class="search-hl">${m}</mark>`);
+}
 function stripMarkdown(str) {
   if (!str) return '';
   return str
@@ -3975,11 +4057,8 @@ function showToast(msg, type = '') {
 }
 
 // =========================================================
-// AUTO-UPDATE BANNER
+// UPPDATERINGSCHECK
 // =========================================================
-let _updateState = 'idle'; // idle | downloading | ready | error
-let _updateErrorShown = false;
-
 function showUpdateBanner(text, { showInstall = false, downloading = false } = {}) {
   const banner = document.getElementById('update-banner');
   if (!banner) return;
@@ -3994,9 +4073,13 @@ function dismissUpdateBanner() {
   if (banner) banner.style.display = 'none';
 }
 
-function installUpdate() {
-  if (_electronApi && _electronApi.update_install) {
-    _electronApi.update_install();
+async function downloadUpdate() {
+  if (!_updateInfo.downloadUrl || !_electronApi || !_electronApi.update_download) return;
+  const res = await _electronApi.update_download(_updateInfo.downloadUrl);
+  if (res && res.ok) {
+    showToast('Nedladdning startad i webbläsaren', 'success');
+  } else {
+    showToast('Kunde inte öppna nedladdningen' + (res && res.error ? ': ' + res.error : ''), 'error');
   }
 }
 
@@ -4005,42 +4088,13 @@ function _setDashVersionStatus(text) {
   const el = document.getElementById('dash-version-status');
   if (el) el.textContent = text;
 }
-function _setDashInstallBtn(visible) {
-  const el = document.getElementById('dash-version-install-btn');
-  if (el) el.style.display = visible ? '' : 'none';
-}
-
-function handleUpdateEvent(type, data) {
-  if (type === 'available') {
-    _updateState = 'downloading';
-    _updateErrorShown = false;
-    const v = data && data.version ? ` ${data.version}` : '';
-    if (data && data.version) _updateInfo.latestVersion = data.version;
-    showUpdateBanner(`Ny version${v} laddas ner...`, { downloading: true });
-    _setDashVersionStatus(`Version${v} hittad — laddas ner…`);
-  } else if (type === 'progress') {
-    if (_updateState === 'downloading' && data && typeof data.percent === 'number') {
-      const pct = Math.round(data.percent);
-      _updateInfo.percent = pct;
-      showUpdateBanner(`Laddar ner uppdatering... ${pct}%`, { downloading: true });
-      const v = _updateInfo.latestVersion ? ` ${_updateInfo.latestVersion}` : '';
-      _setDashVersionStatus(`Laddar ner version${v}… ${pct}%`);
-    }
-  } else if (type === 'downloaded') {
-    _updateState = 'ready';
-    const v = data && data.version ? ` ${data.version}` : '';
-    if (data && data.version) _updateInfo.latestVersion = data.version;
-    showUpdateBanner(`Version${v} är redo — starta om för att installera`, { showInstall: true });
-    showToast(`Uppdatering${v} klar`, 'success');
-    _setDashVersionStatus(`Version${v} är redo att installeras.`);
-    _setDashInstallBtn(true);
-  } else if (type === 'error') {
-    _updateState = 'error';
-    // Visa bara fel-toast en gång per session — annars spammar bakgrunds-pollingen
-    if (!_updateErrorShown) {
-      _updateErrorShown = true;
-      showToast('Kunde inte söka efter uppdatering', 'error');
-    }
+function _setDashDownloadBtn(visible, version, assetName) {
+  const el = document.getElementById('dash-version-download-btn');
+  if (!el) return;
+  el.style.display = visible ? '' : 'none';
+  if (visible) {
+    el.textContent = version ? `Ladda ner version ${version}` : 'Ladda ner uppdatering';
+    el.title = assetName || '';
   }
 }
 
@@ -4149,9 +4203,6 @@ function initApp() {
 // men vi skickar ett extra anrop från frontend som fallback.
 if (_electronApi) {
   _electronApi.ensure_ollama().catch(() => {});
-  if (_electronApi.onUpdateEvent) {
-    _electronApi.onUpdateEvent(handleUpdateEvent);
-  }
 } else if (_tauriApi) {
   window.__TAURI_INTERNALS__.invoke('ensure_ollama').catch(() => {});
 }

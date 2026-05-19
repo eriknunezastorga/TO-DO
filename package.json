@@ -39,7 +39,7 @@
     "publish": {
       "provider": "github",
       "owner": "eriknunezastorga",
-      "repo": "TO-DO",
+      "repo": "Simpel",
       "releaseType": "release"
     }
   },
