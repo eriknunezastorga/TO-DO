@@ -1285,6 +1285,10 @@ a { color: inherit; text-decoration: none; }
 
       <!-- TASKS VIEW -->
       <div id="tasks-view" style="display:none">
+        <div id="project-heading" style="display:none;align-items:center;gap:10px;margin-bottom:16px;">
+          <span id="project-heading-dot" style="width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+          <h2 id="project-heading-name" style="font-size:20px;font-weight:700;color:var(--text);margin:0;"></h2>
+        </div>
         <div class="stats-bar" id="stats-bar"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
           <button id="new-task-btn" onclick="openTaskModal()">
@@ -2120,9 +2124,11 @@ function filterByProject(id) {
   if (currentView !== 'tasks') switchView('tasks');
   filterProject = id;
   document.querySelectorAll('.sb-project-item').forEach(el => el.classList.remove('active'));
+  const heading = document.getElementById('project-heading');
   if (!id) {
     document.getElementById('proj-all').classList.add('active');
     document.getElementById('project-badge').style.display = 'none';
+    heading.style.display = 'none';
   } else {
     document.querySelector(`.sb-project-item[data-id="${id}"]`)?.classList.add('active');
     const proj = state.projects.find(p => p.id === id);
@@ -2130,6 +2136,9 @@ function filterByProject(id) {
       const badge = document.getElementById('project-badge');
       badge.innerHTML = `<span class="badge-dot" style="background:${proj.color}"></span>${proj.name}`;
       badge.style.display = 'inline-flex';
+      document.getElementById('project-heading-dot').style.background = proj.color;
+      document.getElementById('project-heading-name').textContent = proj.name;
+      heading.style.display = 'flex';
     }
   }
   renderTaskList();
