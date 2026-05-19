@@ -392,14 +392,14 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 /* -------- FORMAT-VERKTYGSFÄLT -------- */
 .notes-fmt-toolbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 12px; border-bottom: 1px solid #FDE68A;
-  background: #FFFBEB; flex-shrink: 0; flex-wrap: wrap; gap: 6px;
+  padding: 7px 14px; border-bottom: 1px solid #FDE68A;
+  background: #FFFBEB; flex-shrink: 0; flex-wrap: wrap; gap: 10px;
 }
 .fmt-toolbar-left, .fmt-toolbar-right {
-  display: flex; align-items: center; gap: 3px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
 }
 .fmt-btn {
-  min-width: 26px; height: 26px; padding: 0 5px;
+  min-width: 26px; height: 26px; padding: 0 8px;
   border-radius: 5px; font-size: 12.5px; font-weight: 700;
   color: #92400E; background: transparent; cursor: pointer;
   border: 1px solid transparent; transition: all .12s;
@@ -407,15 +407,16 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 }
 .fmt-btn:hover { background: #FEF3C7; border-color: #FDE68A; }
 .fmt-btn.active { background: #FDE68A; border-color: #FCD34D; color: #78350F; }
+.fmt-btn-text { gap: 5px; font-weight: 600; font-size: 12px; }
 .fmt-sep {
-  width: 1px; height: 16px; background: #FDE68A; margin: 0 3px; flex-shrink: 0;
+  width: 1px; height: 16px; background: #FDE68A; margin: 0 6px; flex-shrink: 0;
 }
 .fmt-btn-share {
-  font-size: 11px; font-weight: 600; padding: 0 9px;
-  color: var(--accent); border: 1px solid var(--accent);
+  font-size: 11.5px; font-weight: 600; padding: 0 10px; gap: 4px;
+  color: var(--accent); border: 1px solid transparent; background: transparent;
   border-radius: 5px; height: 26px;
 }
-.fmt-btn-share:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.fmt-btn-share:hover { background: rgba(20,184,166,.10); border-color: var(--accent); }
 /* -------- TAGG-RAD -------- */
 .notes-tag-bar {
   display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
@@ -536,20 +537,20 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 .notes-status-sep { opacity: .35; }
 #notes-status-sync { display: flex; align-items: center; gap: 3px; }
 .btn-to-task {
-  font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
-  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
+  font-size: 11.5px; font-weight: 600; color: var(--accent); border: 1px solid transparent;
+  border-radius: 5px; padding: 3px 10px; transition: all .15s; cursor: pointer; background: transparent;
 }
-.btn-to-task:hover { background: var(--accent); color: #fff; }
+.btn-to-task:hover { background: rgba(20,184,166,.10); border-color: var(--accent); }
 .btn-del-note {
-  font-size: 11px; font-weight: 600; color: var(--high); border: 1px solid var(--high);
-  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: none;
+  font-size: 11.5px; font-weight: 600; color: var(--high); border: 1px solid transparent;
+  border-radius: 5px; padding: 3px 10px; transition: all .15s; cursor: pointer; background: transparent;
 }
-.btn-del-note:hover { background: var(--high); color: #fff; }
+.btn-del-note:hover { background: rgba(225,29,72,.08); border-color: var(--high); }
 .btn-copy-note {
-  font-size: 11px; font-weight: 600; color: var(--text-muted); border: 1px solid var(--border);
-  border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: var(--surface2);
+  font-size: 11.5px; font-weight: 600; color: var(--text-muted); border: 1px solid transparent;
+  border-radius: 5px; padding: 3px 10px; transition: all .15s; cursor: pointer; background: transparent;
 }
-.btn-copy-note:hover { background: var(--surface3); color: var(--text); }
+.btn-copy-note:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
 .btn-ai-structure {
   font-size: 11px; font-weight: 600; color: #5B21B6; border: 1px solid #C4B5FD;
   border-radius: 5px; padding: 3px 9px; transition: all .15s; cursor: pointer; background: #EDE9FE;
@@ -558,11 +559,12 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 /* Template picker */
 .note-template-picker { position: relative; display: inline-block; }
 .note-template-picker-btn {
-  background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD;
-  border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600;
-  transition: all .15s; cursor: pointer; display: flex; align-items: center; gap: 5px;
+  background: transparent; color: #5B21B6; border: 1px solid transparent;
+  border-radius: 5px; padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  transition: all .15s; cursor: pointer; display: flex; align-items: center; gap: 5px; height: 26px;
 }
-.note-template-picker-btn:hover, .note-template-picker-btn.active { background: #5B21B6; color: #fff; border-color: #5B21B6; }
+.note-template-picker-btn:hover { background: #EDE9FE; border-color: #C4B5FD; }
+.note-template-picker-btn.active { background: #5B21B6; color: #fff; border-color: #5B21B6; }
 .template-dropdown {
   display: none; position: absolute; top: calc(100% + 6px); left: 0;
   background: #fff; border: 1px solid #E5E7EB; border-radius: 10px;
@@ -1351,6 +1353,7 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
         <input type="text" id="search-input" placeholder="Sök uppgifter..." oninput="onSearch(this.value)">
       </div>
+      <button class="topbar-help-btn" onclick="openSettingsModal()" title="Inställningar" style="margin-right:6px">⚙</button>
       <button class="topbar-help-btn" onclick="showWelcomeModal()" title="Om Simpel">?</button>
     </div>
 
@@ -1440,19 +1443,19 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
                   <div class="fmt-sep"></div>
                   <button class="fmt-btn" id="fmt-btn-ul"     onclick="fmtCmd('ul')"     title="Punktlista">&#x2630;</button>
                   <div class="fmt-sep"></div>
-                  <button class="fmt-btn" id="fmt-btn-link"   onclick="fmtInsertLink()"  title="Infoga länk">&#x1F517;</button>
-                  <button class="fmt-btn" id="fmt-btn-img"    onclick="fmtInsertImage()" title="Infoga bild">&#x1F5BC;</button>
+                  <button class="fmt-btn fmt-btn-text" id="fmt-btn-link"   onclick="fmtInsertLink()"  title="Infoga länk">&#x1F517; Länk</button>
+                  <button class="fmt-btn fmt-btn-text" id="fmt-btn-img"    onclick="fmtInsertImage()" title="Infoga bild">&#x1F5BC; Bild</button>
                   <div class="fmt-sep"></div>
-                  <button class="btn-copy-note" onclick="copyNoteContent()" title="Kopiera anteckning">&#x2398; Kopiera</button>
+                  <button class="btn-copy-note" onclick="copyNoteContent()" title="Kopiera anteckningen">Kopiera</button>
                   <div class="note-template-picker">
-                    <button class="note-template-picker-btn" id="editor-tpl-btn" onclick="toggleEditorTemplatePicker(this)">&#x2736; AI-mall <span style="font-size:9px;opacity:.8">&#x25BE;</span></button>
+                    <button class="note-template-picker-btn" id="editor-tpl-btn" onclick="toggleEditorTemplatePicker(this)" title="Förbättra texten med AI">Förbättra med AI <span style="font-size:9px;opacity:.8">&#x25BE;</span></button>
                     <div class="template-dropdown" id="editor-tpl-drop"></div>
                   </div>
-                  <button class="btn-to-task" onclick="noteToTask(activeNoteId)">Gör till uppgift</button>
+                  <button class="btn-to-task" onclick="noteToTask(activeNoteId)" title="Skapa en uppgift från denna anteckning">+ Skapa uppgift</button>
                 </div>
                 <div class="fmt-toolbar-right">
-                  <button class="fmt-btn fmt-btn-share" onclick="shareNote()" title="Dela anteckning">&#x2197; Dela</button>
-                  <button class="btn-del-note" onclick="deleteNote(activeNoteId)">Ta bort</button>
+                  <button class="fmt-btn fmt-btn-share" onclick="shareNote()" title="Dela anteckningen via e-post">&#x2709; Dela via e-post</button>
+                  <button class="btn-del-note" onclick="deleteNote(activeNoteId)" title="Ta bort anteckningen">Ta bort</button>
                 </div>
               </div>
               <!-- TAGG-RAD -->
@@ -1567,7 +1570,7 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
           <input type="time" id="f-reminderTime" value="09:00" style="display:none">
           <input type="date" id="f-reminderDate" style="display:none">
         </div>
-        <input type="email" id="f-reminderEmail" placeholder="Mejl-utkast (valfritt)" style="margin-top:6px;display:none">
+        <small style="display:block;margin-top:6px;color:#666">E-postavisering konfigureras globalt via ⚙ i toppmenyn.</small>
       </div>
       <div class="form-group">
         <label>Taggar (kommaseparerade)</label>
@@ -1581,6 +1584,59 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeTaskModal()">Avbryt</button>
       <button class="btn-primary" onclick="saveTask()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settings-modal-backdrop" onclick="closeModalOnBackdrop(event,'settings-modal-backdrop')">
+  <div class="modal modal-form" id="settings-modal">
+    <div class="modal-header">
+      <h2>Inställningar — E-postavisering</h2>
+      <button class="modal-close" onclick="closeSettingsModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="set-email-enabled" style="width:auto"> Aktivera e-postaviseringar
+        </label>
+        <small style="display:block;margin-top:6px;color:#666">När detta är aktiverat skickas ett mejl till din adress varje gång en påminnelse triggas.</small>
+      </div>
+      <div class="form-group">
+        <label>Förinställning</label>
+        <select id="set-email-preset" onchange="applyEmailPreset()">
+          <option value="">— Välj e-postleverantör —</option>
+          <option value="gmail">Gmail (smtp.gmail.com:587)</option>
+          <option value="outlook">Outlook / Hotmail (smtp-mail.outlook.com:587)</option>
+          <option value="icloud">iCloud (smtp.mail.me.com:587)</option>
+          <option value="custom">Anpassad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Min e-postadress (avsändare = mottagare)</label>
+        <input type="email" id="set-email-user" placeholder="dittnamn@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>App-lösenord</label>
+        <input type="password" id="set-email-password" placeholder="••••••••••••" autocomplete="new-password">
+        <small style="display:block;margin-top:6px;color:#666">Gmail/Outlook kräver ett "app-lösenord" (kontot måste ha 2FA aktiverat) — inte ditt vanliga inloggningslösenord. Lösenordet sparas krypterat lokalt på den här datorn.</small>
+      </div>
+      <div class="form-row" style="display:flex;gap:8px">
+        <div class="form-group" style="flex:1">
+          <label>SMTP-server</label>
+          <input type="text" id="set-email-host" placeholder="smtp.gmail.com">
+        </div>
+        <div class="form-group" style="width:110px">
+          <label>Port</label>
+          <input type="number" id="set-email-port" value="587">
+        </div>
+      </div>
+      <div id="set-email-status" style="margin-top:8px;min-height:1.4em"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="testEmailSettings()">Testa anslutning</button>
+      <button class="btn-secondary" onclick="closeSettingsModal()">Avbryt</button>
+      <button class="btn-primary" onclick="saveEmailSettings()">Spara</button>
     </div>
   </div>
 </div>
@@ -1797,8 +1853,6 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 <div class="ai-float-toolbar" id="ai-float-toolbar">
   <button class="ai-float-btn" onclick="aiWriteAssist('improve')">Forbattra</button>
   <button class="ai-float-btn" onclick="aiWriteAssist('shorten')">Forkorta</button>
-  <button class="ai-float-btn" onclick="aiWriteAssist('expand')">Expandera</button>
-  <button class="ai-float-btn" onclick="aiWriteAssist('bullets')">Punktlista</button>
 </div>
 
 <!-- NOTIFICATION BAR -->
@@ -1975,7 +2029,6 @@ function createTask(fields) {
     reminder: fields.reminder || 'none',
     reminderTime: fields.reminderTime || '09:00',
     reminderDate: fields.reminderDate || null,
-    reminderEmail: fields.reminderEmail || null,
     createdAt: new Date().toISOString()
   };
   state.tasks.unshift(task);
@@ -2038,7 +2091,6 @@ function openTaskModal(prefill = {}) {
   document.getElementById('f-reminder').value = prefill.reminder || 'none';
   document.getElementById('f-reminderTime').value = prefill.reminderTime || '09:00';
   document.getElementById('f-reminderDate').value = prefill.reminderDate || '';
-  document.getElementById('f-reminderEmail').value = prefill.reminderEmail || '';
   updateReminderUI();
   document.getElementById('f-tags').value = (prefill.tags||[]).join(', ');
   const prio = prefill.priority || 'none';
@@ -2065,7 +2117,6 @@ function updateReminderUI() {
   const active = val !== 'none';
   document.getElementById('f-reminderTime').style.display = active ? '' : 'none';
   document.getElementById('f-reminderDate').style.display = val === 'custom' ? '' : 'none';
-  document.getElementById('f-reminderEmail').style.display = active ? '' : 'none';
 }
 
 // =========================================================
@@ -2140,7 +2191,6 @@ function saveTask() {
     reminder: document.getElementById('f-reminder').value || 'none',
     reminderTime: document.getElementById('f-reminderTime').value || '09:00',
     reminderDate: document.getElementById('f-reminderDate').value || null,
-    reminderEmail: document.getElementById('f-reminderEmail').value || null,
     projectId: document.getElementById('f-project').value || null,
     tags: document.getElementById('f-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
     priority: document.querySelector('input[name="priority"]:checked')?.value || null
@@ -3157,18 +3207,14 @@ function checkReminders() {
     }
     t.reminderSentAt = new Date().toISOString();
     scheduleSave();
-    triggerNotification(t.title, `Påminnelse: ${t.title}${t.deadline ? ' · '+formatDate(t.deadline) : ''}`, t.id, t.reminderEmail);
+    triggerNotification(t.title, `Påminnelse: ${t.title}${t.deadline ? ' · '+formatDate(t.deadline) : ''}`, t.id);
   });
 }
 
-function triggerNotification(title, body, taskId, reminderEmail) {
+function triggerNotification(title, body, taskId) {
   showToast(`⏰ ${title} — ${body}`, 'info');
   bridge.call('notify', title, body, taskId).catch(() => {});
-  if (reminderEmail) {
-    const sub = encodeURIComponent('Påminnelse: ' + title);
-    const bod = encodeURIComponent(body);
-    window.location.href = `mailto:${reminderEmail}?subject=${sub}&body=${bod}`;
-  }
+  bridge.call('send_email', 'Påminnelse: ' + title, body).catch(() => {});
   if ('Notification' in window) {
     if (Notification.permission === 'granted') {
       new Notification('Simpel – ' + title, { body });
@@ -3181,6 +3227,89 @@ function triggerNotification(title, body, taskId, reminderEmail) {
 }
 
 setInterval(checkReminders, 60000);
+
+// =========================================================
+// SETTINGS — E-postavisering
+// =========================================================
+async function openSettingsModal() {
+  document.getElementById('set-email-status').textContent = '';
+  document.getElementById('set-email-password').value = '';
+  document.getElementById('set-email-preset').value = '';
+  let c = null;
+  try { c = await bridge.call('get_email_config'); } catch (_) { c = null; }
+  document.getElementById('set-email-enabled').checked = !!(c && c.enabled);
+  document.getElementById('set-email-user').value = (c && c.user) || '';
+  document.getElementById('set-email-host').value = (c && c.host) || '';
+  document.getElementById('set-email-port').value = (c && c.port) || 587;
+  document.getElementById('set-email-password').placeholder = (c && c.hasPassword) ? '(sparat — lämna tomt för att behålla)' : '••••••••••••';
+  document.getElementById('settings-modal-backdrop').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal-backdrop').classList.remove('open');
+}
+
+function applyEmailPreset() {
+  const v = document.getElementById('set-email-preset').value;
+  const presets = {
+    gmail:   { host: 'smtp.gmail.com',         port: 587 },
+    outlook: { host: 'smtp-mail.outlook.com',  port: 587 },
+    icloud:  { host: 'smtp.mail.me.com',       port: 587 }
+  };
+  if (presets[v]) {
+    document.getElementById('set-email-host').value = presets[v].host;
+    document.getElementById('set-email-port').value = presets[v].port;
+  }
+}
+
+function readEmailFormCfg() {
+  const user = document.getElementById('set-email-user').value.trim();
+  return {
+    enabled: document.getElementById('set-email-enabled').checked,
+    host: document.getElementById('set-email-host').value.trim(),
+    port: document.getElementById('set-email-port').value,
+    user,
+    to: user,
+    password: document.getElementById('set-email-password').value
+  };
+}
+
+async function saveEmailSettings() {
+  const cfg = readEmailFormCfg();
+  if (cfg.enabled && (!cfg.host || !cfg.user)) {
+    showToast('Fyll i adress och SMTP-server innan du aktiverar', 'error');
+    return;
+  }
+  try {
+    const r = await bridge.call('save_email_config', cfg);
+    if (r && r.ok) {
+      showToast('E-postinställningar sparade', 'success');
+      closeSettingsModal();
+    } else {
+      showToast('Fel vid spar: ' + ((r && r.error) || 'okänt'), 'error');
+    }
+  } catch (e) {
+    showToast('Fel: ' + e.message, 'error');
+  }
+}
+
+async function testEmailSettings() {
+  const status = document.getElementById('set-email-status');
+  status.textContent = 'Testar anslutning...'; status.style.color = '';
+  try {
+    const r = await bridge.call('test_email', readEmailFormCfg());
+    if (r && r.ok) {
+      status.textContent = '✅ Testmejl skickat — kolla din inkorg.';
+      status.style.color = '#16a34a';
+    } else {
+      status.textContent = '❌ ' + ((r && r.error) || 'Okänt fel');
+      status.style.color = '#dc2626';
+    }
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+    status.style.color = '#dc2626';
+  }
+}
 
 // =========================================================
 // AI — OLLAMA
@@ -3353,10 +3482,8 @@ async function aiWriteAssist(mode) {
   const selectedText = sel ? sel.toString().trim() : '';
   if (!selectedText) return;
   const prompts = {
-    improve: `Förbättra följande text på svenska. Svara ENDAST med den förbättrade texten:\n"${selectedText}"`,
-    shorten: `Förkorta följande text på svenska, behåll det viktigaste. Svara ENDAST med den förkortade texten:\n"${selectedText}"`,
-    expand: `Expandera följande text på svenska med mer detaljer. Svara ENDAST med den expanderade texten:\n"${selectedText}"`,
-    bullets: `Gör om följande text till en punktlista på svenska. Svara ENDAST med punktlistan:\n"${selectedText}"`
+    improve: `Förbättra följande text på svenska. Putsa språk och flyt, ta bort onödiga ord och fraser. Lägg ALDRIG till ny information eller fakta som inte redan finns i texten. Behåll betydelsen exakt. Svara ENDAST med den förbättrade texten utan citattecken:\n"${selectedText}"`,
+    shorten: `Förkorta följande text på svenska. Behåll all viktig betydelse men ta bort utfyllnad och onödiga delar. Lägg ALDRIG till ny information. Svara ENDAST med den förkortade texten utan citattecken:\n"${selectedText}"`
   };
   const ed = document.getElementById('notes-editor-body');
   if (!ed) return;

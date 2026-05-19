@@ -1,9 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, shell, safeStorage } = require('electron');
 const fs    = require('fs');
 const path  = require('path');
 const http  = require('http');
 const https = require('https');
 const { spawn } = require('child_process');
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (_) { /* installeras vid npm install */ }
 
 const UPDATE_REPO_OWNER = 'eriknunezastorga';
 const UPDATE_REPO_NAME  = 'TO-DO';
@@ -160,6 +162,113 @@ ipcMain.handle('import_dialog', async () => {
 });
 
 ipcMain.handle('ensure_ollama', () => ensureOllama());
+
+// =========================================================
+// EMAIL (SMTP via nodemailer + krypterad lagring via safeStorage)
+// =========================================================
+
+function emailConfigPath() {
+  const dir = path.join(process.env.APPDATA || app.getPath('userData'), 'Simpel');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, 'email-config.json');
+}
+
+function readEmailConfig() {
+  try {
+    const raw = fs.readFileSync(emailConfigPath(), 'utf8');
+    const c = JSON.parse(raw);
+    if (c.passwordEnc && safeStorage.isEncryptionAvailable()) {
+      try { c.password = safeStorage.decryptString(Buffer.from(c.passwordEnc, 'base64')); }
+      catch (_) { c.password = null; }
+    }
+    return c;
+  } catch (_) { return null; }
+}
+
+ipcMain.handle('get_email_config', () => {
+  const c = readEmailConfig();
+  if (!c) return null;
+  return {
+    enabled: !!c.enabled,
+    host: c.host || '',
+    port: c.port || 587,
+    user: c.user || '',
+    to: c.to || '',
+    hasPassword: !!c.passwordEnc,
+  };
+});
+
+ipcMain.handle('save_email_config', (_e, cfg) => {
+  try {
+    const out = {
+      enabled: !!cfg.enabled,
+      host: (cfg.host || '').trim(),
+      port: Number(cfg.port) || 587,
+      user: (cfg.user || '').trim(),
+      to: (cfg.to || cfg.user || '').trim(),
+    };
+    if (cfg.password) {
+      if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'safeStorage ej tillgängligt' };
+      out.passwordEnc = safeStorage.encryptString(cfg.password).toString('base64');
+    } else {
+      const existing = readEmailConfig();
+      if (existing && existing.passwordEnc) out.passwordEnc = existing.passwordEnc;
+    }
+    fs.writeFileSync(emailConfigPath(), JSON.stringify(out, null, 2), 'utf8');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('send_email', async (_e, subject, body) => {
+  if (!nodemailer) return { ok: false, error: 'nodemailer ej installerat' };
+  const c = readEmailConfig();
+  if (!c || !c.enabled || !c.host || !c.port || !c.user || !c.password || !c.to) {
+    return { ok: false, error: 'ej konfigurerad' };
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: c.host,
+      port: c.port,
+      secure: c.port === 465,
+      auth: { user: c.user, pass: c.password },
+    });
+    await transporter.sendMail({ from: c.user, to: c.to, subject, text: body });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('test_email', async (_e, cfg) => {
+  if (!nodemailer) return { ok: false, error: 'nodemailer ej installerat — kör "npm install"' };
+  let password = cfg && cfg.password;
+  if (!password) {
+    const existing = readEmailConfig();
+    if (existing) password = existing.password;
+  }
+  const host = (cfg && cfg.host || '').trim();
+  const port = Number(cfg && cfg.port) || 587;
+  const user = (cfg && cfg.user || '').trim();
+  const to = (cfg && cfg.to || user).trim();
+  if (!host || !port || !user || !password || !to) return { ok: false, error: 'Fyll i alla fält först' };
+  try {
+    const transporter = nodemailer.createTransport({
+      host, port, secure: port === 465,
+      auth: { user, pass: password },
+    });
+    await transporter.verify();
+    await transporter.sendMail({
+      from: user, to,
+      subject: 'Simpel — testmejl',
+      text: 'Detta är ett testmejl från Simpel. SMTP-anslutningen fungerar.',
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
 
 ipcMain.handle('app:version', () => app.getVersion());
 

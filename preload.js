@@ -15,4 +15,8 @@ contextBridge.exposeInMainWorld('electronApi', {
   app_version:     ()       => ipcRenderer.invoke('app:version'),
   update_check:    ()       => ipcRenderer.invoke('update:check'),
   update_download: (url)    => ipcRenderer.invoke('update:download', url),
+  get_email_config: ()       => ipcRenderer.invoke('get_email_config'),
+  save_email_config: (cfg)   => ipcRenderer.invoke('save_email_config', cfg),
+  send_email:       (s, b)   => ipcRenderer.invoke('send_email', s, b),
+  test_email:       (cfg)    => ipcRenderer.invoke('test_email', cfg),
 });
