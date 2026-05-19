@@ -6,7 +6,7 @@ const https = require('https');
 const { spawn } = require('child_process');
 
 const UPDATE_REPO_OWNER = 'eriknunezastorga';
-const UPDATE_REPO_NAME  = 'Simpel';
+const UPDATE_REPO_NAME  = 'TO-DO';
 
 function fetchLatestRelease(owner, repo) {
   return new Promise((resolve, reject) => {
