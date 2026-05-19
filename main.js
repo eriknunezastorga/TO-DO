@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const fs   = require('fs');
 const path = require('path');
@@ -72,9 +72,17 @@ ipcMain.handle('save', (_event, data) => {
 
 ipcMain.handle('get_data_path', () => dataPath());
 
-ipcMain.handle('notify', (_event, title, message) => {
+ipcMain.handle('notify', (_event, title, message, taskId) => {
   if (Notification.isSupported()) {
-    new Notification({ title, body: message }).show();
+    const n = new Notification({ title, body: message });
+    if (taskId && mainWindow) {
+      n.on('click', () => {
+        mainWindow.show();
+        mainWindow.focus();
+        mainWindow.webContents.send('open-task', taskId);
+      });
+    }
+    n.show();
   }
 });
 
@@ -110,12 +118,35 @@ ipcMain.handle('import_dialog', async () => {
 
 ipcMain.handle('ensure_ollama', () => ensureOllama());
 
+ipcMain.handle('app:version', () => app.getVersion());
+
+ipcMain.handle('update:check', async () => {
+  if (!app.isPackaged) return { devMode: true };
+  try {
+    const res = await autoUpdater.checkForUpdates();
+    return { updateInfo: res ? res.updateInfo : null };
+  } catch (e) {
+    return { error: e.message };
+  }
+});
+
+ipcMain.handle('update:install', () => {
+  if (app.isPackaged) {
+    isQuitting = true;
+    autoUpdater.quitAndInstall();
+  }
+});
+
 // =========================================================
-// WINDOW
+// WINDOW & TRAY
 // =========================================================
 
+let mainWindow = null;
+let tray = null;
+let isQuitting = false;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 920,
@@ -129,15 +160,63 @@ function createWindow() {
     },
   });
 
-  win.loadFile('Simpel.html');
-  win.setMenuBarVisibility(false);
+  mainWindow.loadFile('Simpel.html');
+  mainWindow.setMenuBarVisibility(false);
+
+  // Hide to tray on close instead of quitting
+  mainWindow.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
+  });
+}
+
+function createTray() {
+  tray = new Tray(path.join(__dirname, 'build', 'icon.png'));
+  tray.setToolTip('Simpel');
+
+  const buildMenu = () => {
+    const openAtLogin = app.getLoginItemSettings().openAtLogin;
+    return Menu.buildFromTemplate([
+      {
+        label: 'Öppna Simpel',
+        click: () => { mainWindow.show(); mainWindow.focus(); }
+      },
+      { type: 'separator' },
+      {
+        label: 'Starta med Windows',
+        type: 'checkbox',
+        checked: openAtLogin,
+        click: (item) => {
+          app.setLoginItemSettings({ openAtLogin: item.checked, openAsHidden: true });
+          tray.setContextMenu(buildMenu());
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Avsluta',
+        click: () => { isQuitting = true; app.quit(); }
+      }
+    ]);
+  };
+
+  tray.setContextMenu(buildMenu());
+  tray.on('double-click', () => { mainWindow.show(); mainWindow.focus(); });
+}
+
+function sendToRenderer(channel, payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel, payload);
+  }
 }
 
 function setupAutoUpdater() {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on('update-available', () => {
+  autoUpdater.on('update-available', (info) => {
+    sendToRenderer('update:available', { version: info && info.version });
     if (Notification.isSupported()) {
       new Notification({
         title: 'Simpel — Uppdatering hittad',
@@ -146,17 +225,22 @@ function setupAutoUpdater() {
     }
   });
 
-  autoUpdater.on('update-downloaded', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Uppdatering redo',
-      message: 'En ny version av Simpel har laddats ner.',
-      detail: 'Starta om appen nu för att installera uppdateringen.',
-      buttons: ['Starta om nu', 'Senare'],
-      defaultId: 0,
-    }).then(({ response }) => {
-      if (response === 0) autoUpdater.quitAndInstall();
-    });
+  autoUpdater.on('download-progress', (progress) => {
+    sendToRenderer('update:progress', { percent: progress && progress.percent });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    sendToRenderer('update:downloaded', { version: info && info.version });
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Simpel — Uppdatering klar',
+        body: 'Starta om appen för att installera den nya versionen.',
+      }).show();
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    sendToRenderer('update:error', { message: err && err.message });
   });
 
   // Check on startup, then every 4 hours
@@ -167,9 +251,9 @@ function setupAutoUpdater() {
 app.whenReady().then(() => {
   ensureOllama().catch(() => {});
   createWindow();
+  createTray();
   if (app.isPackaged) setupAutoUpdater();
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+// Keep app alive in tray — only quit via tray menu
+app.on('window-all-closed', () => {});
