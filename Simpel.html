@@ -299,7 +299,7 @@ a { color: inherit; text-decoration: none; }
 }
 /* LEFT PANEL */
 .notes-sidebar {
-  width: 280px; flex-shrink: 0;
+  width: 320px; flex-shrink: 0;
   border-right: 1px solid var(--border);
   background: var(--surface);
   display: flex; flex-direction: column; overflow: hidden;
@@ -1125,10 +1125,6 @@ a { color: inherit; text-decoration: none; }
 
       <!-- NOTES VIEW -->
       <div id="notes-view" style="display:none">
-        <!-- FLIKRAD -->
-        <div class="notes-tabs-bar" id="notes-tabs-bar">
-          <button class="note-tab-add-btn" onclick="addNoteTab()" title="Ny vy">+</button>
-        </div>
         <div id="notes-view-inner">
           <!-- LEFT PANEL: note list -->
           <div class="notes-sidebar">
@@ -1190,7 +1186,10 @@ a { color: inherit; text-decoration: none; }
                 oninput="onEditorInput()"
                 onmouseup="checkNoteSelection(event)"
                 onkeydown="onEditorKeyDown(event)"
-                onblur="saveActiveNote()"></div>
+                onblur="saveActiveNote()"
+                onpaste="onEditorPaste(event)"
+                ondrop="onEditorDrop(event)"
+                ondragover="event.preventDefault()"></div>
               <!-- STATUSFÄLT -->
               <div class="notes-status-bar">
                 <span id="notes-status-saved">SENAST SPARAD --:--</span>
@@ -2138,7 +2137,6 @@ function renderNotes() {
       </div>`;
     }).join('');
   }
-  renderNoteTabs();
   if (activeNoteId) {
     const note = state.notes.find(n => n.id === activeNoteId);
     if (note) showNoteEditor(note);
@@ -3061,6 +3059,39 @@ function fmtInsertLink() {
   saveActiveNote();
 }
 
+function insertHtmlAtCaret(html, savedRange) {
+  const ed = document.getElementById('notes-editor-body');
+  if (!ed) return;
+  ed.focus();
+  const sel = window.getSelection();
+  if (!sel) return;
+  let range;
+  if (savedRange) {
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+    range = savedRange;
+  } else if (sel.rangeCount > 0) {
+    range = sel.getRangeAt(0);
+  } else {
+    range = document.createRange();
+    range.selectNodeContents(ed);
+    range.collapse(false);
+  }
+  range.deleteContents();
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const frag = tpl.content;
+  const lastNode = frag.lastChild;
+  range.insertNode(frag);
+  if (lastNode) {
+    const r2 = document.createRange();
+    r2.setStartAfter(lastNode);
+    r2.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r2);
+  }
+}
+
 function fmtInsertImage() {
   if (!activeNoteId) return;
   const sel = window.getSelection();
@@ -3068,30 +3099,55 @@ function fmtInsertImage() {
   document.getElementById('note-img-input').click();
 }
 
+function _readFileAsImage(file, caption, savedRange) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    const imgHtml = caption
+      ? `<span class="note-img-wrap"><img src="${base64}" alt="${escHtml(caption)}"><span class="note-img-caption">${escHtml(caption)}</span></span>`
+      : `<img src="${base64}" alt="Bild">`;
+    insertHtmlAtCaret(imgHtml, savedRange || null);
+    saveActiveNote();
+  };
+  reader.readAsDataURL(file);
+}
+
 function onImageFileSelected(event) {
   const file = event.target.files[0];
   event.target.value = '';
   if (!file || !activeNoteId) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result;
-    const caption = (window.prompt('Bildtext (valfri):', '') || '').trim();
-    const ed = document.getElementById('notes-editor-body');
-    if (!ed) return;
-    ed.focus();
-    if (_savedImgRange) {
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(_savedImgRange);
-      _savedImgRange = null;
+  const saved = _savedImgRange;
+  _savedImgRange = null;
+  const caption = (window.prompt('Bildtext (valfri):', '') || '').trim();
+  _readFileAsImage(file, caption, saved);
+}
+
+function onEditorPaste(e) {
+  if (!activeNoteId) return;
+  const items = (e.clipboardData || window.clipboardData || {}).items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      if (!blob) return;
+      _readFileAsImage(blob, '', null);
+      return;
     }
-    const imgHtml = caption
-      ? `<span class="note-img-wrap"><img src="${base64}" alt="${escHtml(caption)}"><span class="note-img-caption">${escHtml(caption)}</span></span>`
-      : `<img src="${base64}" alt="Bild">`;
-    document.execCommand('insertHTML', false, imgHtml);
-    saveActiveNote();
-  };
-  reader.readAsDataURL(file);
+  }
+}
+
+function onEditorDrop(e) {
+  if (!activeNoteId) return;
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || !files.length) return;
+  for (const file of files) {
+    if (file.type.startsWith('image/')) {
+      e.preventDefault();
+      _readFileAsImage(file, '', null);
+      return;
+    }
+  }
 }
 
 function shareNote() {
