@@ -474,6 +474,52 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 .note-context-menu-item.new-tag { color: #92400E; font-weight: 600; }
 .note-context-menu-sep { border-bottom: 1px solid #FEF3C7; margin: 4px 0; }
 .note-context-menu-empty { padding: 6px 12px; color: #9CA3AF; font-style: italic; }
+/* -------- INSTÄLLNINGAR: FLIKAR + TAGGAR -------- */
+.settings-tabs {
+  display: flex; gap: 4px; padding: 0 28px; border-bottom: 1px solid var(--border);
+  background: #FAFAFA;
+}
+.settings-tab {
+  padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text-muted);
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.settings-tab-panel { display: none; }
+.settings-tab-panel.active { display: block; }
+.settings-tag-list {
+  display: flex; flex-direction: column; gap: 6px; margin: 8px 0 14px;
+  max-height: 260px; overflow-y: auto;
+}
+.settings-tag-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px; background: #FAFAFA; border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.settings-tag-row .note-tag-badge { cursor: default; }
+.settings-tag-row .note-tag-badge:hover { opacity: 1; }
+.settings-tag-empty {
+  padding: 14px; text-align: center; color: var(--text-muted);
+  font-size: 13px; font-style: italic;
+  background: #FAFAFA; border: 1px dashed var(--border); border-radius: 8px;
+}
+.settings-tag-del {
+  background: transparent; border: none; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 6px;
+  color: #9CA3AF; font-size: 14px; transition: background .15s, color .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.settings-tag-del:hover { background: #FEE2E2; color: var(--high); }
+.settings-tag-add-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.settings-tag-add-row input {
+  flex: 1; padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px;
+}
+.settings-tag-add-row input:focus { outline: none; border-color: var(--accent); }
 /* -------- CONTENTEDITABLE EDITOR -------- */
 .notes-editor-body {
   flex: 1; overflow-y: auto;
@@ -1305,12 +1351,6 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 
     <div class="sb-bottom">
       <div class="sb-divider" style="margin:0 0 8px;"></div>
-      <div class="sb-section-label" style="padding:0 12px 6px;">AI</div>
-      <button class="sb-btn" onclick="openPromptTemplatesPanel()">
-        <svg viewBox="0 0 16 16" fill="currentColor" width="15" height="15"><path d="M7.5 1a.5.5 0 01.457.295l1.5 3.25.05.118.125.02 3.5.508a.5.5 0 01.277.852l-2.53 2.466-.09.088.02.124.597 3.478a.5.5 0 01-.725.527L7.5 10.863l-3.181 1.673a.5.5 0 01-.725-.527l.597-3.478.02-.124-.09-.088L1.591 5.853a.5.5 0 01.277-.852l3.5-.508.125-.02.05-.118 1.5-3.25A.5.5 0 017.5 1z"/></svg>
-        Promptmallar
-      </button>
-      <div class="sb-divider" style="margin:8px 0;"></div>
       <div class="sb-section-label" style="padding:0 12px 6px;">Export</div>
       <button class="sb-btn" onclick="exportJSON()">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg>
@@ -1592,10 +1632,16 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 <div class="modal-backdrop" id="settings-modal-backdrop" onclick="closeModalOnBackdrop(event,'settings-modal-backdrop')">
   <div class="modal modal-form" id="settings-modal">
     <div class="modal-header">
-      <h2>Inställningar — Aviseringar</h2>
+      <h2>Inställningar</h2>
       <button class="modal-close" onclick="closeSettingsModal()">&#x2715;</button>
     </div>
+    <div class="settings-tabs">
+      <button type="button" class="settings-tab active" id="settings-tab-btn-notif" onclick="switchSettingsTab('notif')">Aviseringar</button>
+      <button type="button" class="settings-tab" id="settings-tab-btn-tags" onclick="switchSettingsTab('tags')">Taggar</button>
+      <button type="button" class="settings-tab" id="settings-tab-btn-prompts" onclick="switchSettingsTab('prompts')">AI-promptmallar</button>
+    </div>
     <div class="modal-body">
+      <div class="settings-tab-panel active" id="settings-tab-notif">
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="set-notif-enabled" style="width:auto"> Aktivera aviseringar
@@ -1659,10 +1705,76 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
         <button class="btn-secondary" type="button" onclick="bridge.call('notify', 'Testnotis från Simpel', 'Så här ser dina påminnelser ut. Klicka för att stänga.')">Skicka testnotis</button>
         <small style="color:#666">Klicka för att se en exempelnotis direkt.</small>
       </div>
+      </div>
+
+      <div class="settings-tab-panel" id="settings-tab-tags">
+        <div class="form-group">
+          <p style="margin:0 0 10px;font-size:13px;color:#666;line-height:1.5">
+            Taggar du skapar här blir tillgängliga via högerklick på en anteckning, och i taggraden ovanför anteckningslistan. Att ta bort en tagg här tar även bort den från alla anteckningar som bär den.
+          </p>
+          <div class="settings-tag-list" id="settings-tag-list"></div>
+          <div class="settings-tag-add-row">
+            <input type="text" id="settings-tag-input" placeholder="Ny tagg (t.ex. VIKTIGT)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addGlobalTag();}">
+            <button class="btn-primary" type="button" onclick="addGlobalTag()">Lägg till</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tab-panel" id="settings-tab-prompts">
+        <p style="margin:0 0 12px;font-size:13px;color:#666;line-height:1.5">
+          Promptmallar är återanvändbara AI-instruktioner som körs på en anteckning. Använd <code>{anteckning}</code> som platshållare för anteckningens text.
+        </p>
+        <div id="pt-list-view">
+          <div id="pt-list"></div>
+          <button class="pt-new-btn" onclick="openNewTemplate()">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z"/></svg>
+            Ny mall
+          </button>
+        </div>
+        <div id="pt-edit-view" style="display:none">
+          <h4 id="ptanel-title" style="margin:0 0 10px;font-size:14px;font-weight:700;color:var(--text)">Redigera mall</h4>
+          <div style="margin-bottom:12px">
+            <label class="pt-label">Namn</label>
+            <input id="pt-edit-name" class="pt-input" type="text" placeholder="T.ex. Sammanfatta">
+          </div>
+          <div>
+            <label class="pt-label">Prompt</label>
+            <textarea id="pt-edit-prompt" class="pt-textarea" placeholder="Skriv din prompt här...&#10;&#10;Använd {anteckning} där anteckningens text ska klistras in."></textarea>
+            <span class="pt-placeholder-hint">Använd <code>{anteckning}</code> som platshållare för anteckningens text.</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+            <button class="btn-secondary" onclick="cancelTemplateEdit()">Avbryt</button>
+            <button class="btn-primary" onclick="saveTemplateFromPanel()">Spara</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeSettingsModal()">Avbryt</button>
       <button class="btn-primary" onclick="saveNotificationSettings()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAG PROMPT MODAL (ersätter window.prompt för taggar) -->
+<div class="modal-backdrop" id="tag-prompt-backdrop" onclick="closeModalOnBackdrop(event,'tag-prompt-backdrop')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="tag-prompt-title">Ny tagg</h2>
+      <button class="modal-close" onclick="closeTagPromptModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Taggnamn</label>
+        <input type="text" id="tag-prompt-input" placeholder="t.ex. VIKTIGT"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();confirmTagPrompt();}">
+        <small style="display:block;margin-top:6px;color:#666">Taggar skrivs alltid med versaler.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeTagPromptModal()">Avbryt</button>
+      <button class="btn-primary" onclick="confirmTagPrompt()">Lägg till</button>
     </div>
   </div>
 </div>
@@ -1712,39 +1824,6 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
   </div>
 </div>
 
-<!-- PROMPT TEMPLATES MANAGEMENT MODAL -->
-<div class="modal-backdrop" id="prompt-templates-backdrop" style="display:none" onclick="if(event.target===this)closePromptTemplatesPanel()">
-  <div class="modal" style="max-width:540px;padding:24px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 id="ptanel-title" style="font-size:16px;font-weight:700">Promptmallar</h3>
-      <button onclick="closePromptTemplatesPanel()" style="font-size:18px;color:#9CA3AF;cursor:pointer;line-height:1;background:none;padding:2px 6px;border-radius:5px;transition:color .12s" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9CA3AF'">✕</button>
-    </div>
-    <!-- List view -->
-    <div id="pt-list-view">
-      <div id="pt-list"></div>
-      <button class="pt-new-btn" onclick="openNewTemplate()">
-        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z"/></svg>
-        Ny mall
-      </button>
-    </div>
-    <!-- Edit / create view -->
-    <div id="pt-edit-view" style="display:none">
-      <div style="margin-bottom:12px">
-        <label class="pt-label">Namn</label>
-        <input id="pt-edit-name" class="pt-input" type="text" placeholder="T.ex. Sammanfatta">
-      </div>
-      <div>
-        <label class="pt-label">Prompt</label>
-        <textarea id="pt-edit-prompt" class="pt-textarea" placeholder="Skriv din prompt här...&#10;&#10;Använd {anteckning} där anteckningens text ska klistras in."></textarea>
-        <span class="pt-placeholder-hint">Använd <code>{anteckning}</code> som platshållare för anteckningens text.</span>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
-        <button class="btn-secondary" onclick="cancelTemplateEdit()">Avbryt</button>
-        <button class="btn-primary" onclick="saveTemplateFromPanel()">Spara</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- NOTE STRUCTURE PREVIEW MODAL -->
 <div class="modal-backdrop" id="note-structure-backdrop" onclick="if(event.target===this)closeNoteStructureModal()">
@@ -1893,7 +1972,7 @@ mark.search-hl { background: #FEF08A; color: inherit; padding: 0 1px; border-rad
 // =========================================================
 // STATE
 // =========================================================
-let state = { tasks: [], projects: [], notes: [], aiModel: '' };
+let state = { tasks: [], projects: [], notes: [], tags: [], aiModel: '' };
 let currentView = 'dashboard';
 let filterPriority = 'all';
 let filterProject = null;
@@ -1983,6 +2062,13 @@ async function loadData() {
     state.tasks = data.tasks || [];
     state.projects = data.projects || [];
     state.notes = data.notes || [];
+    state.tags = Array.isArray(data.tags) ? data.tags.slice() : [];
+    const inUse = state.notes.flatMap(n => n.tags || []);
+    const union = [...new Set([...state.tags, ...inUse])];
+    if (union.length !== state.tags.length) {
+      state.tags = union;
+      scheduleSave();
+    }
   } catch(e) {
     console.error('Load failed', e);
   }
@@ -3293,11 +3379,122 @@ async function openSettingsModal() {
   try { c = await bridge.call('get_email_config'); } catch (_) { c = null; }
   const enabled = c ? c.enabled !== false : true;
   document.getElementById('set-notif-enabled').checked = enabled;
+  switchSettingsTab('notif');
+  renderSettingsTagList();
   document.getElementById('settings-modal-backdrop').classList.add('open');
 }
 
 function closeSettingsModal() {
   document.getElementById('settings-modal-backdrop').classList.remove('open');
+}
+
+function switchSettingsTab(name) {
+  ['notif', 'tags', 'prompts'].forEach(p => {
+    const btn = document.getElementById('settings-tab-btn-' + p);
+    const panel = document.getElementById('settings-tab-' + p);
+    if (btn) btn.classList.toggle('active', p === name);
+    if (panel) panel.classList.toggle('active', p === name);
+  });
+  if (name === 'tags') {
+    renderSettingsTagList();
+    const inp = document.getElementById('settings-tag-input');
+    if (inp) setTimeout(() => inp.focus(), 50);
+  } else if (name === 'prompts') {
+    if (typeof showPtListView === 'function') showPtListView();
+    if (typeof renderTemplateList === 'function') renderTemplateList();
+  }
+}
+
+function renderSettingsTagList() {
+  const list = document.getElementById('settings-tag-list');
+  if (!list) return;
+  const tags = [...(state.tags || [])].sort();
+  if (!tags.length) {
+    list.innerHTML = `<div class="settings-tag-empty">Inga taggar än. Skriv ett namn nedan och klicka "Lägg till".</div>`;
+    return;
+  }
+  list.innerHTML = tags.map(tag => {
+    const inUseCount = state.notes.filter(n => (n.tags || []).includes(tag)).length;
+    const usageText = inUseCount === 0 ? 'Används inte än' : (inUseCount === 1 ? '1 anteckning' : `${inUseCount} anteckningar`);
+    const tagEsc = escHtml(tag).replace(/'/g, "\\'");
+    return `<div class="settings-tag-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="note-tag-badge" style="${tagColor(tag)}">${escHtml(tag)}</span>
+        <small style="color:#9CA3AF;font-size:11px">${usageText}</small>
+      </div>
+      <button class="settings-tag-del" type="button" title="Ta bort tagg" onclick="removeGlobalTag('${tagEsc}')">&#x2715;</button>
+    </div>`;
+  }).join('');
+}
+
+function addGlobalTag() {
+  const inp = document.getElementById('settings-tag-input');
+  if (!inp) return;
+  const raw = (inp.value || '').trim();
+  if (!raw) { inp.focus(); return; }
+  const tag = raw.toUpperCase();
+  if (!state.tags) state.tags = [];
+  if (state.tags.includes(tag)) {
+    showToast(`Taggen "${tag}" finns redan`, 'info');
+  } else {
+    state.tags.push(tag);
+    scheduleSave();
+    showToast(`Tagg "${tag}" tillagd`, 'success');
+  }
+  inp.value = '';
+  inp.focus();
+  renderSettingsTagList();
+  renderNoteTagFilter();
+}
+
+function removeGlobalTag(tag) {
+  const inUseCount = state.notes.filter(n => (n.tags || []).includes(tag)).length;
+  if (inUseCount > 0) {
+    const msg = inUseCount === 1
+      ? `Taggen "${tag}" används av 1 anteckning. Ta bort ändå?`
+      : `Taggen "${tag}" används av ${inUseCount} anteckningar. Ta bort ändå?`;
+    if (!confirm(msg)) return;
+  }
+  state.tags = (state.tags || []).filter(t => t !== tag);
+  state.notes.forEach(n => { if (n.tags) n.tags = n.tags.filter(t => t !== tag); });
+  if (activeTagFilter === tag) activeTagFilter = null;
+  scheduleSave();
+  renderSettingsTagList();
+  renderNotes();
+  if (activeNoteId) {
+    const note = state.notes.find(n => n.id === activeNoteId);
+    if (note) renderNoteTagBar(note);
+  }
+  showToast(`Tagg "${tag}" borttagen`, 'success');
+}
+
+// =========================================================
+// TAG PROMPT MODAL (ersätter window.prompt)
+// =========================================================
+let tagPromptCallback = null;
+
+function openTagPromptModal(onConfirm) {
+  tagPromptCallback = onConfirm;
+  const inp = document.getElementById('tag-prompt-input');
+  if (inp) inp.value = '';
+  document.getElementById('tag-prompt-backdrop').classList.add('open');
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+
+function closeTagPromptModal() {
+  document.getElementById('tag-prompt-backdrop').classList.remove('open');
+  tagPromptCallback = null;
+}
+
+function confirmTagPrompt() {
+  const inp = document.getElementById('tag-prompt-input');
+  if (!inp) return;
+  const raw = (inp.value || '').trim();
+  if (!raw) { inp.focus(); return; }
+  const tag = raw.toUpperCase();
+  const cb = tagPromptCallback;
+  closeTagPromptModal();
+  if (typeof cb === 'function') cb(tag);
 }
 
 async function saveNotificationSettings() {
@@ -3580,22 +3777,16 @@ function applyTemplate(templateId, noteId) {
   structureNote(noteId, tpl.prompt, tpl.name);
 }
 
-// Prompt Templates management panel
+// Prompt Templates management (inom Inställningar-modalen)
 let editingTemplateId = null;
 
-function openPromptTemplatesPanel() {
-  renderTemplateList();
-  showPtListView();
-  document.getElementById('prompt-templates-backdrop').style.display = 'flex';
-}
-function closePromptTemplatesPanel() {
-  document.getElementById('prompt-templates-backdrop').style.display = 'none';
-  editingTemplateId = null;
+async function openPromptTemplatesPanel() {
+  await openSettingsModal();
+  switchSettingsTab('prompts');
 }
 function showPtListView() {
   document.getElementById('pt-list-view').style.display = '';
   document.getElementById('pt-edit-view').style.display = 'none';
-  document.getElementById('ptanel-title').textContent = 'Promptmallar';
 }
 function renderTemplateList() {
   const templates = getTemplates();
@@ -4004,10 +4195,17 @@ function onEditorKeyDown(e) {
 // =========================================================
 // TAGG-FILTER OCH KONTEXTMENY FÖR ANTECKNINGAR
 // =========================================================
+function getAllKnownTags() {
+  return [...new Set([
+    ...(state.tags || []),
+    ...state.notes.flatMap(n => n.tags || [])
+  ])].sort();
+}
+
 function renderNoteTagFilter() {
   const bar = document.getElementById('notes-tag-filter');
   if (!bar) return;
-  const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort();
+  const allTags = getAllKnownTags();
   if (activeTagFilter && !allTags.includes(activeTagFilter)) activeTagFilter = null;
   if (!allTags.length) { bar.innerHTML = ''; return; }
   const allChip = `<span class="notes-tag-filter-chip all-chip${!activeTagFilter ? ' active' : ''}"
@@ -4034,7 +4232,7 @@ function showNoteContextMenu(event, noteId) {
   if (!note) return;
   const menu = document.getElementById('note-context-menu');
   if (!menu) return;
-  const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort();
+  const allTags = getAllKnownTags();
   const noteTags = note.tags || [];
   let html = '';
   if (allTags.length) {
@@ -4082,18 +4280,18 @@ function toggleNoteTagFromMenu(tag) {
 
 function addTagFromMenu() {
   if (!contextMenuNoteId) return;
-  const raw = (window.prompt('Ny tagg:') || '').trim();
-  if (!raw) { hideNoteContextMenu(); return; }
-  const tag = raw.toUpperCase();
-  const note = state.notes.find(n => n.id === contextMenuNoteId);
-  if (!note) return;
-  if (!note.tags) note.tags = [];
-  if (!note.tags.includes(tag)) note.tags.push(tag);
-  scheduleSave();
-  const wasActive = contextMenuNoteId === activeNoteId;
+  const noteId = contextMenuNoteId;
   hideNoteContextMenu();
-  renderNotes();
-  if (wasActive) renderNoteTagBar(note);
+  openTagPromptModal((tag) => {
+    const note = state.notes.find(n => n.id === noteId);
+    if (!note) return;
+    if (!note.tags) note.tags = [];
+    if (!note.tags.includes(tag)) note.tags.push(tag);
+    if (!state.tags.includes(tag)) state.tags.push(tag);
+    scheduleSave();
+    renderNotes();
+    if (noteId === activeNoteId) renderNoteTagBar(note);
+  });
 }
 
 // =========================================================
@@ -4110,18 +4308,20 @@ function renderNoteTagBar(note) {
 
 function addNoteTag() {
   if (!activeNoteId) return;
-  const raw = (window.prompt('Ny tagg:') || '').trim();
-  if (!raw) return;
-  const tag = raw.toUpperCase();
-  const note = state.notes.find(n => n.id === activeNoteId);
-  if (!note) return;
-  if (!note.tags) note.tags = [];
-  if (!note.tags.includes(tag)) {
-    note.tags.push(tag);
+  const noteId = activeNoteId;
+  openTagPromptModal((tag) => {
+    const note = state.notes.find(n => n.id === noteId);
+    if (!note) return;
+    if (!note.tags) note.tags = [];
+    if (!note.tags.includes(tag)) {
+      note.tags.push(tag);
+    }
+    if (!state.tags.includes(tag)) state.tags.push(tag);
     scheduleSave();
-    renderNoteTagBar(note);
-    updateNoteListItem(activeNoteId);
-  }
+    if (noteId === activeNoteId) renderNoteTagBar(note);
+    updateNoteListItem(noteId);
+    renderNoteTagFilter();
+  });
 }
 
 function removeNoteTag(tag) {
